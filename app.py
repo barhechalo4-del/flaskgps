@@ -136,6 +136,8 @@ def home():
 <title>MT GPS Dashboard</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; font-family:Arial,sans-serif; }
 body { background:#f4f7fb; color:#0f172a; overflow-x:hidden; }
@@ -172,6 +174,27 @@ body { background:#f4f7fb; color:#0f172a; overflow-x:hidden; }
 .camera { height:320px; margin-top:15px; position:relative; }
 .mini-map { height:230px; margin-top:12px; border:1px solid #cbd5e1; background:#e5e7eb; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
+.map .leaflet-container { width:100%; height:100%; }
+.car-marker {
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#ef4444;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:3px solid white;
+  box-shadow:0 0 0 0 rgba(239,68,68,.75), 0 8px 20px rgba(15,23,42,.35);
+  font-size:11px;
+  font-weight:900;
+  animation:carBlink 1s infinite;
+}
+@keyframes carBlink {
+  0% { transform:scale(.96); box-shadow:0 0 0 0 rgba(239,68,68,.75), 0 8px 20px rgba(15,23,42,.35); }
+  70% { transform:scale(1.08); box-shadow:0 0 0 18px rgba(239,68,68,0), 0 8px 20px rgba(15,23,42,.35); }
+  100% { transform:scale(.96); box-shadow:0 0 0 0 rgba(239,68,68,0), 0 8px 20px rgba(15,23,42,.35); }
+}
 .rec { position:absolute; top:15px; right:15px; background:#ef4444; color:white; padding:7px 14px; border-radius:20px; font-size:13px; font-weight:bold; z-index:5; }
 .info,.tracking-info { margin-top:25px; gap:15px; }
 .box { padding:18px; border-radius:14px; border-left:5px solid #0891b2; }
@@ -221,7 +244,7 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
     <div class="stat"><h3>Selected Speed</h3><h2 id="selectedSpeed">--</h2></div>
   </div>
   <div class="grid">
-    <div class="card"><h2>MAP - Selected Vehicle GPS Tracking</h2><div class="map"><iframe id="dashboardMap" src="https://maps.google.com/maps?q=28.6139,77.2090&z=13&output=embed"></iframe></div></div>
+    <div class="card"><h2>MAP - Selected Vehicle GPS Tracking</h2><div class="map" id="dashboardMap"></div></div>
     <div class="card"><h2>CAMERA - Selected Vehicle Camera</h2><div class="camera" id="dashboardCamera"></div></div>
   </div>
   <div class="info">
@@ -260,7 +283,7 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
     <div class="box"><div class="label">GPS Status</div><div class="value" id="trackStatus">--</div></div>
   </div>
   <div class="grid tracking-grid">
-    <div class="card"><h2>MAP - Vehicle Live Map</h2><div class="map"><iframe id="mapFrame" src="https://maps.google.com/maps?q=28.6139,77.2090&z=15&output=embed"></iframe></div></div>
+    <div class="card"><h2>MAP - Vehicle Live Map</h2><div class="map" id="mapFrame"></div></div>
     <div class="card"><h2>CAMERA - Vehicle Live Camera</h2><div class="camera" id="trackingCamera"></div></div>
   </div>
 </div>
@@ -289,6 +312,13 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
 let activeVehicle = null;
 let dashboardCameraVehicle = null;
 let trackingCameraVehicle = null;
+let dashboardLeafletMap = null;
+let trackingLeafletMap = null;
+let dashboardMarker = null;
+let trackingMarker = null;
+let dashboardRoute = null;
+let trackingRoute = null;
+let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 
 let vehicles = {
   v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car1" },
@@ -303,6 +333,13 @@ function showPage(pageId, menuItem){
   document.querySelectorAll('.menu div').forEach(i=>i.classList.remove('active-menu'));
   menuItem.classList.add('active-menu');
   if(pageId === 'camera') loadCameraViewOnlyActive();
+  if(pageId === 'dashboard' || pageId === 'tracking'){
+    setTimeout(()=>{
+      if(dashboardLeafletMap) dashboardLeafletMap.invalidateSize();
+      if(trackingLeafletMap) trackingLeafletMap.invalidateSize();
+      if(activeVehicle) updateMapForVehicle(activeVehicle);
+    }, 100);
+  }
 }
 function activeBadge(){ return `<span class="live">Video Active</span>`; }
 function offlineBadge(){ return `<span class="offline">Video Offline</span>`; }
@@ -313,6 +350,46 @@ function cameraHtml(id){
   return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
+function carIcon(){
+  return L.divIcon({
+    className: '',
+    html: '<div class="car-marker">CAR</div>',
+    iconSize: [42, 42],
+    iconAnchor: [21, 21]
+  });
+}
+function initLeafletMaps(){
+  let start = [28.6139, 77.2090];
+  dashboardLeafletMap = L.map('dashboardMap').setView(start, 13);
+  trackingLeafletMap = L.map('mapFrame').setView(start, 15);
+  [dashboardLeafletMap, trackingLeafletMap].forEach(map=>{
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+  });
+  dashboardMarker = L.marker(start, {icon: carIcon()}).addTo(dashboardLeafletMap);
+  trackingMarker = L.marker(start, {icon: carIcon()}).addTo(trackingLeafletMap);
+  dashboardRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(dashboardLeafletMap);
+  trackingRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(trackingLeafletMap);
+}
+function validLatLon(v){
+  let lat = Number(v.lat);
+  let lon = Number(v.lon);
+  if(!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return [lat, lon];
+}
+function addRoutePoint(id){
+  let point = validLatLon(vehicles[id]);
+  if(!point || vehicles[id].gpsActive !== true) return;
+  let history = routeHistory[id] || [];
+  let last = history[history.length - 1];
+  if(!last || last[0] !== point[0] || last[1] !== point[1]){
+    history.push(point);
+    if(history.length > 500) history.shift();
+    routeHistory[id] = history;
+  }
+}
 function getActiveVehicleIds(){ return Object.keys(vehicles).filter(id=>vehicles[id].videoActive === true); }
 function getGpsVehicleIds(){ return Object.keys(vehicles).filter(id=>vehicles[id].gpsActive === true); }
 
@@ -381,8 +458,16 @@ function loadCameraViewOnlyActive(){
 
 function updateMapForVehicle(id){
   let v = vehicles[id];
-  document.getElementById('dashboardMap').src = mapSrc(v, 15);
-  document.getElementById('mapFrame').src = mapSrc(v, 15);
+  let point = validLatLon(v);
+  if(!point || !dashboardLeafletMap || !trackingLeafletMap) return;
+  addRoutePoint(id);
+  dashboardMarker.setLatLng(point);
+  trackingMarker.setLatLng(point);
+  dashboardRoute.setLatLngs(routeHistory[id] || []);
+  trackingRoute.setLatLngs(routeHistory[id] || []);
+  dashboardLeafletMap.setView(point, Math.max(dashboardLeafletMap.getZoom(), 15));
+  trackingLeafletMap.setView(point, Math.max(trackingLeafletMap.getZoom(), 15));
+  setTimeout(()=>{ dashboardLeafletMap.invalidateSize(); trackingLeafletMap.invalidateSize(); }, 80);
 }
 
 function updateCameraIfNeeded(id){
@@ -460,6 +545,7 @@ async function fetchGPSLoggerData(){
         vehicles[id].gpsActive = data[id].gps_active;
         vehicles[id].videoActive = data[id].video_active;
         if(data[id].gps_active === true) vehicles[id].location = data[id].lat + ', ' + data[id].lon;
+        addRoutePoint(id);
       }
     }
     loadActiveVehiclesDropdown();
@@ -474,6 +560,7 @@ async function fetchGPSLoggerData(){
 }
 
 function initDashboard(){
+  initLeafletMaps();
   loadActiveVehiclesDropdown();
   updateRowsVisibility();
   selectVehicle('v1');
