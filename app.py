@@ -823,7 +823,7 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<iframe src="https://vdo.ninja/?view=car1&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
+        camera: `<iframe src="https://vdo.ninja/?view=nRgmvm2car1&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v2: {
         name: "Vehicle 2",
@@ -836,7 +836,7 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<iframe src="https://vdo.ninja/?view=car2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
+        camera: `<iframe src="https://vdo.ninja/?viewQEztWwR=car2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v3: {
         name: "Vehicle 3",
