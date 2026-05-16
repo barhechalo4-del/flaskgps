@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 
@@ -818,7 +818,7 @@ let vehicles = {
         speed: "58 km/h",
         lastUpdate: "No GPS Data",
         gpsActive: false,
-        videoActive: false,
+        videoActive: true,
         camera: `<img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7">`
     },
     v3: {
@@ -831,7 +831,7 @@ let vehicles = {
         speed: "72 km/h",
         lastUpdate: "No GPS Data",
         gpsActive: false,
-        videoActive: false,
+        videoActive: true,
         camera: `<img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70">`
     },
     v4: {
@@ -844,7 +844,7 @@ let vehicles = {
         speed: "53 km/h",
         lastUpdate: "No GPS Data",
         gpsActive: false,
-        videoActive: false,
+        videoActive: true,
         camera: `<img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d">`
     }
 };
