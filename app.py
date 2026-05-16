@@ -511,7 +511,7 @@ function loadCameraViewOnlyActive(){
         <div class="meta-pill"><b>Driver:</b> ${v.driver}</div>
         <div class="meta-pill"><b>Plate:</b> ${v.plate}</div>
         <div class="meta-pill"><b>Vehicle:</b> ${v.name}</div>
-        <div class="meta-pill"><b>Camera:</b> ${v.cameraId}</div>
+        <div class="meta-pill"><b>Mob No:</b> ${v.cameraId}</div>
       </div>
     `;
     grid.appendChild(card);
@@ -739,7 +739,7 @@ def mobile_camera_page():
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>{vehicle_id.upper()} Mobile Camera</title>
+<title>{vehicle_id.upper()} Mobile Feed</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
@@ -755,10 +755,10 @@ iframe {{ width:100vw; height:calc(100vh - 58px); border:0; display:block; backg
 <body>
 <div class="top">
   <div>
-    <div class="title">{vehicle_id.upper()} Camera ({camera_id})</div>
+    <div class="title">{vehicle_id.upper()} Mob No ({camera_id})</div>
     <div class="status" id="status">Starting video heartbeat...</div>
   </div>
-  <a class="open" href="{vdo_push_url}" target="_blank">Open Camera</a>
+  <a class="open" href="{vdo_push_url}" target="_blank">Open Feed</a>
 </div>
 <iframe src="{vdo_push_url}" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>
 <script>
