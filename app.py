@@ -11,10 +11,10 @@ GPS_TIMEOUT_SECONDS = 60
 VIDEO_TIMEOUT_SECONDS = 60
 GPS_API_TOKEN = os.environ.get("GPS_API_TOKEN")
 CAMERA_IDS = {
-    "v1": "car1",
-    "v2": "car2",
-    "v3": "car3",
-    "v4": "car4",
+    "v1": "9100000001",
+    "v2": "9100000002",
+    "v3": "9100000003",
+    "v4": "9100000004",
 }
 
 
@@ -371,10 +371,10 @@ let trackingRoute = null;
 let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 
 let vehicles = {
-  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car1" },
-  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car2" },
-  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car3" },
-  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car4" }
+  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000001" },
+  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000002" },
+  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000003" },
+  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000004" }
 };
 
 function showPage(pageId, menuItem){
