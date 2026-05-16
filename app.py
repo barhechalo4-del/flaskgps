@@ -806,7 +806,7 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<iframe src="https://vdo.ninja/?view=mRgvm2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
+        camera: `<iframe src="https://vdo.ninja/?view=nRgmvm2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v2: {
         name: "Vehicle 2",
