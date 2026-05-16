@@ -216,8 +216,8 @@ iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
   color:#ffffff;
   border:2px solid #ffffff;
   border-radius:999px;
-  padding:2px 7px;
-  font-size:10px;
+  padding:2px 8px;
+  font-size:9px;
   font-weight:900;
   letter-spacing:.6px;
   line-height:1;
@@ -315,16 +315,6 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 <div id="tracking" class="page">
   <div class="title">LIVE TRACKING</div>
   <div class="subtitle">Dropdown me active vehicles dikhenge. GPS Logger se map update hoga.</div>
-  <div class="gps-help">
-    <b>GPS Logger URL Format:</b><br>
-    Vehicle 1: /gps?id=v1&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
-    Vehicle 2: /gps?id=v2&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
-    Vehicle 3: /gps?id=v3&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
-    Vehicle 4: /gps?id=v4&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
-    Mobile camera link: /mobile-camera?id=v1<br>
-    Video active heartbeat: /video?id=v1<br>
-    Token enabled ho to URL me &amp;token=YOUR_TOKEN add karein ya X-GPS-Token header bhejein.
-  </div>
   <select id="vehicleSelect" onchange="changeVehicle()"></select>
   <div class="tracking-info">
     <div class="box"><div class="label">Driver</div><div class="value" id="trackDriver">--</div></div>
@@ -413,7 +403,7 @@ function carIcon(id){
   let c = vehicleColor(id);
   return L.divIcon({
     className: '',
-    html: `<div class="car-marker" style="border-color:${c.main};box-shadow:0 0 0 0 ${c.main}bf,0 8px 20px rgba(15,23,42,.35);"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="${c.main}"/><path d="M20 21h24l4 13H16l4-13z" fill="${c.roof}"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="${c.body}"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label" style="background:${c.main};">VEH</span></div>`,
+    html: `<div class="car-marker" style="border-color:${c.main};box-shadow:0 0 0 0 ${c.main}bf,0 8px 20px rgba(15,23,42,.35);"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="${c.main}"/><path d="M20 21h24l4 13H16l4-13z" fill="${c.roof}"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="${c.body}"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label" style="background:${c.main};">VEH TYPE</span></div>`,
     iconSize: [64, 78],
     iconAnchor: [32, 64]
   });
