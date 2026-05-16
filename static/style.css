@@ -1,0 +1,102 @@
+body {
+    margin: 0;
+    background: #f4f7fb;
+    font-family: Arial, sans-serif;
+}
+
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    background: #07111f;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    color: #00e5ff;
+}
+
+.sidebar a {
+    display: block;
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 10px;
+}
+
+.sidebar a:hover {
+    background: #12233a;
+    color: #00e5ff;
+}
+
+.content,
+.main-content {
+    margin-left: 220px;
+    padding: 25px;
+}
+
+h1 {
+    color: #0891b2;
+}
+
+.card,
+.stat-card,
+.info-box,
+.panel {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.card h2,
+.stat-card h2 {
+    color: #0891b2;
+}
+
+.stats,
+.cards,
+.dashboard-cards,
+.vehicle-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.dashboard-grid,
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.map-box,
+#map {
+    height: 250px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.camera-box,
+.camera-feed {
+    height: 250px;
+    background: #111827;
+    border-radius: 15px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rec,
+.recording {
+    background: red;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+}
