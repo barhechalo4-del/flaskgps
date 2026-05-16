@@ -139,42 +139,57 @@ def home():
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-* { box-sizing:border-box; margin:0; padding:0; font-family:Arial,sans-serif; }
-body { background:#f4f7fb; color:#0f172a; overflow-x:hidden; }
-.layout { display:flex; min-height:100vh; }
-.sidebar { width:310px; min-height:100vh; position:sticky; top:0; padding:24px 20px; background:linear-gradient(180deg,#020617,#07111f 45%,#0f172a); border-right:1px solid rgba(34,211,238,.18); box-shadow:8px 0 30px rgba(15,23,42,.25); }
-.logo { display:flex; align-items:center; gap:14px; color:#22d3ee; margin-bottom:28px; padding:18px 16px; border-radius:18px; background:rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.28); }
+* { box-sizing:border-box; margin:0; padding:0; font-family:Inter,Segoe UI,Arial,sans-serif; }
+:root {
+  --ink:#0f172a;
+  --muted:#64748b;
+  --line:#dbe3ee;
+  --panel:#ffffff;
+  --canvas:#eef3f8;
+  --nav:#07111f;
+  --nav-2:#0b1628;
+  --accent:#0891b2;
+  --accent-2:#0f766e;
+  --good:#16a34a;
+  --bad:#dc2626;
+}
+body { background:var(--canvas); color:var(--ink); overflow-x:hidden; }
+.layout { display:flex; min-height:100vh; background:linear-gradient(180deg,#f8fbff 0%,#eef3f8 100%); }
+.sidebar { width:296px; min-height:100vh; position:sticky; top:0; padding:22px 14px; background:linear-gradient(180deg,var(--nav),#0c1729 62%,#101827); border-right:1px solid rgba(148,163,184,.18); box-shadow:10px 0 28px rgba(15,23,42,.18); }
+.logo { display:flex; align-items:center; gap:12px; color:#e0faff; margin-bottom:24px; padding:15px; border-radius:8px; background:linear-gradient(135deg,rgba(8,145,178,.22),rgba(15,118,110,.10)); border:1px solid rgba(103,232,249,.24); }
 .logo-icon,.icon { display:flex; align-items:center; justify-content:center; font-weight:900; }
-.logo-icon { width:52px; height:52px; border-radius:16px; background:rgba(34,211,238,.16); font-size:15px; }
-.logo-text { font-size:26px; font-weight:900; letter-spacing:1px; }
-.logo small { display:block; font-size:12px; color:#94a3b8; margin-top:5px; }
-.menu-title { color:#64748b; font-size:12px; font-weight:bold; margin:20px 12px 12px; text-transform:uppercase; letter-spacing:1.2px; }
-.menu div { display:flex; align-items:center; gap:14px; padding:17px 16px; margin-bottom:13px; border-radius:16px; cursor:pointer; background:rgba(255,255,255,.04); color:#cbd5e1; transition:.2s ease; font-size:17px; font-weight:700; border:1px solid rgba(255,255,255,.06); }
-.menu div:hover,.menu div.active-menu { background:rgba(34,211,238,.14); color:#22d3ee; border-color:rgba(34,211,238,.35); }
-.icon { width:38px; height:38px; border-radius:12px; background:rgba(255,255,255,.06); font-size:12px; }
-.sidebar-card { margin-top:28px; padding:18px; border-radius:18px; background:rgba(34,211,238,.10); border:1px solid rgba(34,211,238,.18); }
-.sidebar-card h4 { color:#e2e8f0; font-size:16px; margin-bottom:10px; }
-.sidebar-card p { color:#22c55e; font-size:14px; font-weight:bold; }
-.sidebar-card small { display:block; color:#94a3b8; font-size:12px; margin-top:8px; }
-.main { flex:1; padding:30px; }
+.logo-icon { width:44px; height:44px; border-radius:8px; background:#073749; color:#67e8f9; font-size:12px; }
+.logo-text { font-size:22px; font-weight:900; letter-spacing:.5px; }
+.logo small { display:block; font-size:11px; color:#94a3b8; margin-top:3px; }
+.menu-title { color:#718096; font-size:11px; font-weight:900; margin:18px 8px 10px; text-transform:uppercase; letter-spacing:.9px; }
+.menu div { display:flex; align-items:center; gap:11px; min-height:48px; padding:10px 12px; margin-bottom:8px; border-radius:8px; cursor:pointer; background:transparent; color:#cbd5e1; transition:.18s ease; font-size:14px; font-weight:800; border:1px solid transparent; }
+.menu div:hover { background:rgba(255,255,255,.06); color:#ffffff; border-color:rgba(148,163,184,.14); }
+.menu div.active-menu { background:#083344; color:#67e8f9; border-color:rgba(34,211,238,.32); box-shadow:inset 3px 0 0 #22d3ee; }
+.icon { width:30px; height:30px; border-radius:8px; background:rgba(148,163,184,.14); font-size:10px; color:#dbeafe; }
+.sidebar-card { margin-top:20px; padding:14px; border-radius:8px; background:#082f3d; border:1px solid rgba(34,211,238,.26); }
+.sidebar-card h4 { color:#f8fafc; font-size:13px; margin-bottom:9px; }
+.sidebar-card p { color:#22c55e; font-size:13px; font-weight:900; }
+.sidebar-card small { display:block; color:#a6b3c4; font-size:11px; margin-top:8px; }
+.main { flex:1; min-width:0; padding:24px 28px 34px; }
 .page { display:none; }
 .active { display:block; }
-.title { font-size:38px; font-weight:bold; color:#0891b2; margin-bottom:8px; }
-.subtitle { color:#64748b; margin-bottom:25px; }
-.stats,.info,.tracking-info { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:25px; }
-.stat,.card,.box,.table { background:#fff; border:1px solid #e2e8f0; box-shadow:0 8px 25px rgba(15,23,42,.08); }
-.stat { padding:22px; border-radius:16px; }
-.stat h3 { color:#64748b; font-size:14px; }
-.stat h2 { font-size:30px; margin-top:12px; color:#0891b2; }
-.grid,.camera-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
-.card { padding:20px; border-radius:18px; }
-.card h2 { color:#0f172a; margin-bottom:12px; }
-.map,.camera,.mini-map { overflow:hidden; border-radius:14px; background:#111827; }
-.map { height:320px; margin-top:15px; border:1px solid #cbd5e1; background:#e5e7eb; }
-.camera { height:320px; margin-top:15px; position:relative; }
+.title { font-size:30px; line-height:1.1; font-weight:900; color:var(--ink); margin-bottom:7px; letter-spacing:0; }
+.subtitle { color:var(--muted); margin-bottom:18px; font-size:14px; font-weight:600; }
+.stats,.info,.tracking-info { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.stat,.card,.box,.table { background:rgba(255,255,255,.92); border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.07); }
+.stat { padding:16px; border-radius:8px; position:relative; overflow:hidden; }
+.stat::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:linear-gradient(180deg,var(--accent),var(--accent-2)); }
+.stat h3 { color:#475569; font-size:12px; font-weight:800; }
+.stat h2 { font-size:26px; line-height:1; margin-top:10px; color:var(--accent); font-weight:900; }
+.grid,.camera-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
+.card { padding:14px; border-radius:8px; }
+.card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
+.map,.camera,.mini-map { overflow:hidden; border-radius:8px; background:#111827; }
+.map { height:330px; margin-top:10px; border:1px solid #cbd5e1; background:#e5e7eb; }
+.camera { height:330px; margin-top:10px; position:relative; }
 .mini-map { height:230px; margin-top:12px; border:1px solid #cbd5e1; background:#e5e7eb; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
-.map .leaflet-container { width:100%; height:100%; }
+.map .leaflet-container { width:100%; height:100%; font:12px/1.4 Inter,Segoe UI,Arial,sans-serif; }
 .car-marker {
   width:64px;
   height:64px;
@@ -213,28 +228,34 @@ iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
   70% { transform:scale(1.08); box-shadow:0 0 0 18px rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
   100% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
 }
-.rec { position:absolute; top:15px; right:15px; background:#ef4444; color:white; padding:7px 14px; border-radius:20px; font-size:13px; font-weight:bold; z-index:5; }
-.info,.tracking-info { margin-top:25px; gap:15px; }
-.box { padding:18px; border-radius:14px; border-left:5px solid #0891b2; }
-.label { font-size:14px; color:#64748b; margin-bottom:8px; }
-.value { font-size:21px; font-weight:bold; color:#0f766e; word-break:break-word; }
-.table { margin-top:25px; border-radius:18px; overflow:hidden; }
+.rec { position:absolute; top:12px; right:12px; background:#ef4444; color:white; padding:6px 11px; border-radius:999px; font-size:12px; font-weight:900; z-index:5; }
+.info,.tracking-info { margin-top:18px; gap:12px; }
+.box { padding:14px; border-radius:8px; border-left:4px solid var(--accent); }
+.label { font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:700; }
+.value { font-size:18px; font-weight:900; color:var(--accent-2); word-break:break-word; }
+.table { margin-top:18px; border-radius:8px; overflow:auto; }
 table { width:100%; border-collapse:collapse; }
-th,td { padding:16px; text-align:left; border-bottom:1px solid #e2e8f0; }
-th { background:#f1f5f9; color:#475569; }
-tr:hover,.active-row { background:#ecfeff!important; }
-.live,.offline,.gps-live { padding:6px 12px; border-radius:20px; font-size:13px; font-weight:bold; display:inline-block; }
+th,td { padding:12px; text-align:left; border-bottom:1px solid #e2e8f0; font-size:13px; white-space:nowrap; }
+th { background:#f8fafc; color:#475569; font-weight:900; position:sticky; top:0; z-index:1; }
+td { color:#1e293b; font-weight:600; }
+tr:hover { background:#f8fafc!important; }
+.active-row { background:#ecfeff!important; box-shadow:inset 3px 0 0 var(--accent); }
+.live,.offline,.gps-live { padding:5px 10px; border-radius:999px; font-size:12px; font-weight:900; display:inline-block; }
 .live { background:#dcfce7; color:#16a34a; }
 .offline { background:#fee2e2; color:#dc2626; }
 .gps-live { background:#dbeafe; color:#2563eb; }
-select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0f172a; border:1px solid #0891b2; margin-bottom:20px; font-size:18px; outline:none; }
-.gps-help { background:#ecfeff; border:1px solid #67e8f9; border-radius:16px; padding:15px; margin-bottom:20px; color:#0f172a; font-size:14px; line-height:1.7; }
+.vehicle-legend { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 18px; color:#334155; font-size:12px; font-weight:900; }
+.legend-item { display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:6px 10px; box-shadow:0 4px 12px rgba(15,23,42,.05); }
+.legend-dot { width:13px; height:13px; border-radius:50%; display:inline-block; }
+select { width:100%; padding:13px 14px; border-radius:8px; background:#fff; color:var(--ink); border:1px solid #94a3b8; margin-bottom:16px; font-size:15px; font-weight:700; outline:none; box-shadow:0 5px 14px rgba(15,23,42,.04); }
+select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.12); }
+.gps-help { background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:13px; margin-bottom:16px; color:#134e4a; font-size:13px; line-height:1.65; font-weight:600; }
 .tracking-grid { min-height:560px; }
 .tracking-grid .card { display:flex; flex-direction:column; }
 .tracking-grid .map,.tracking-grid .camera { flex:1; height:auto; min-height:520px; }
 .vehicle-meta { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; color:#334155; font-size:14px; }
-.meta-pill { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; }
-@media(max-width:1000px){ .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .main{padding:16px;} .title{font-size:28px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:11px; font-size:13px;} .vehicle-meta{grid-template-columns:1fr;} }
+.meta-pill { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-weight:700; }
+@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -264,6 +285,12 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
   <div class="grid">
     <div class="card"><h2>MAP - Selected Vehicle GPS Tracking</h2><div class="map" id="dashboardMap"></div></div>
     <div class="card"><h2>CAMERA - Selected Vehicle Camera</h2><div class="camera" id="dashboardCamera"></div></div>
+  </div>
+  <div class="vehicle-legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>V1</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>V2</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>V3</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#9333ea"></span>V4</span>
   </div>
   <div class="info">
     <div class="box"><div class="label">Driver Name</div><div class="value" id="topDriver">--</div></div>
@@ -368,10 +395,20 @@ function cameraHtml(id){
   return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
-function carIcon(){
+const vehicleColors = {
+  v1: {main:'#0891b2', roof:'#67e8f9', body:'#0f766e'},
+  v2: {main:'#16a34a', roof:'#bbf7d0', body:'#15803d'},
+  v3: {main:'#f97316', roof:'#fed7aa', body:'#c2410c'},
+  v4: {main:'#9333ea', roof:'#e9d5ff', body:'#7e22ce'}
+};
+function vehicleColor(id){
+  return vehicleColors[id] || vehicleColors.v1;
+}
+function carIcon(id){
+  let c = vehicleColor(id);
   return L.divIcon({
     className: '',
-    html: '<div class="car-marker"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="#0891b2"/><path d="M20 21h24l4 13H16l4-13z" fill="#67e8f9"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="#0f766e"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label">VEH</span></div>',
+    html: `<div class="car-marker" style="border-color:${c.main};box-shadow:0 0 0 0 ${c.main}bf,0 8px 20px rgba(15,23,42,.35);"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="${c.main}"/><path d="M20 21h24l4 13H16l4-13z" fill="${c.roof}"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="${c.body}"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label" style="background:${c.main};">VEH</span></div>`,
     iconSize: [64, 78],
     iconAnchor: [32, 64]
   });
@@ -386,8 +423,8 @@ function initLeafletMaps(){
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
   });
-  dashboardMarker = L.marker(start, {icon: carIcon()}).addTo(dashboardLeafletMap);
-  trackingMarker = L.marker(start, {icon: carIcon()}).addTo(trackingLeafletMap);
+  dashboardMarker = L.marker(start, {icon: carIcon('v1')}).addTo(dashboardLeafletMap);
+  trackingMarker = L.marker(start, {icon: carIcon('v1')}).addTo(trackingLeafletMap);
   dashboardRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(dashboardLeafletMap);
   trackingRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(trackingLeafletMap);
 }
@@ -479,8 +516,13 @@ function updateMapForVehicle(id){
   let point = validLatLon(v);
   if(!point || !dashboardLeafletMap || !trackingLeafletMap) return;
   addRoutePoint(id);
+  let color = vehicleColor(id).main;
+  dashboardMarker.setIcon(carIcon(id));
+  trackingMarker.setIcon(carIcon(id));
   dashboardMarker.setLatLng(point);
   trackingMarker.setLatLng(point);
+  dashboardRoute.setStyle({color: color});
+  trackingRoute.setStyle({color: color});
   dashboardRoute.setLatLngs(routeHistory[id] || []);
   trackingRoute.setLatLngs(routeHistory[id] || []);
   dashboardLeafletMap.setView(point, Math.max(dashboardLeafletMap.getZoom(), 15));
