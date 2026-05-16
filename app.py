@@ -176,24 +176,49 @@ body { background:#f4f7fb; color:#0f172a; overflow-x:hidden; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .map .leaflet-container { width:100%; height:100%; }
 .car-marker {
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:#ef4444;
+  width:58px;
+  height:36px;
+  border-radius:10px 12px 9px 9px;
+  background:linear-gradient(180deg,#0891b2,#0f766e);
   color:white;
   display:flex;
   align-items:center;
   justify-content:center;
-  border:3px solid white;
-  box-shadow:0 0 0 0 rgba(239,68,68,.75), 0 8px 20px rgba(15,23,42,.35);
-  font-size:11px;
+  border:3px solid #fff;
+  box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35);
+  font-size:12px;
   font-weight:900;
+  letter-spacing:.4px;
+  position:relative;
   animation:carBlink 1s infinite;
 }
+.car-marker::before {
+  content:"";
+  position:absolute;
+  top:-13px;
+  left:13px;
+  width:28px;
+  height:15px;
+  border-radius:10px 10px 0 0;
+  background:#67e8f9;
+  border:3px solid #fff;
+  border-bottom:0;
+}
+.car-marker::after {
+  content:"";
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:-9px;
+  height:10px;
+  background:
+    radial-gradient(circle at left center,#020617 0 5px,transparent 6px),
+    radial-gradient(circle at right center,#020617 0 5px,transparent 6px);
+}
 @keyframes carBlink {
-  0% { transform:scale(.96); box-shadow:0 0 0 0 rgba(239,68,68,.75), 0 8px 20px rgba(15,23,42,.35); }
-  70% { transform:scale(1.08); box-shadow:0 0 0 18px rgba(239,68,68,0), 0 8px 20px rgba(15,23,42,.35); }
-  100% { transform:scale(.96); box-shadow:0 0 0 0 rgba(239,68,68,0), 0 8px 20px rgba(15,23,42,.35); }
+  0% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35); }
+  70% { transform:scale(1.08); box-shadow:0 0 0 18px rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
+  100% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
 }
 .rec { position:absolute; top:15px; right:15px; background:#ef4444; color:white; padding:7px 14px; border-radius:20px; font-size:13px; font-weight:bold; z-index:5; }
 .info,.tracking-info { margin-top:25px; gap:15px; }
@@ -353,9 +378,9 @@ function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v
 function carIcon(){
   return L.divIcon({
     className: '',
-    html: '<div class="car-marker">CAR</div>',
-    iconSize: [42, 42],
-    iconAnchor: [21, 21]
+    html: '<div class="car-marker">VEH</div>',
+    iconSize: [58, 49],
+    iconAnchor: [29, 36]
   });
 }
 function initLeafletMaps(){
