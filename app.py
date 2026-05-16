@@ -680,7 +680,7 @@ MT GPS</div>
 
 <div class="gps-help">
 <b>GPS Logger URL Format:</b><br>
-https://rejoin-pupil-skeleton.ngrok-free.dev/gps
+https://flaskgps.onrender.com/gps?id=v1&lat=%LAT&lon=%LON&speed=%SPD
 Vehicle 1 = v1, Vehicle 2 = v2, Vehicle 3 = v3, Vehicle 4 = v4
 </div>
 
@@ -806,7 +806,7 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<iframe src="https://vdo.ninja/?view=PQzEGMU&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
+        camera: `<iframe src="https://vdo.ninja/?view=mRgvm2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v2: {
         name: "Vehicle 2",
