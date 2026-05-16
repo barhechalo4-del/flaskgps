@@ -176,44 +176,37 @@ body { background:#f4f7fb; color:#0f172a; overflow-x:hidden; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .map .leaflet-container { width:100%; height:100%; }
 .car-marker {
-  width:58px;
-  height:36px;
-  border-radius:10px 12px 9px 9px;
-  background:linear-gradient(180deg,#0891b2,#0f766e);
-  color:white;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:#ffffff;
   display:flex;
   align-items:center;
   justify-content:center;
-  border:3px solid #fff;
+  border:3px solid #0891b2;
   box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.4px;
   position:relative;
   animation:carBlink 1s infinite;
 }
-.car-marker::before {
-  content:"";
-  position:absolute;
-  top:-13px;
-  left:13px;
-  width:28px;
-  height:15px;
-  border-radius:10px 10px 0 0;
-  background:#67e8f9;
-  border:3px solid #fff;
-  border-bottom:0;
+.car-logo {
+  width:48px;
+  height:48px;
+  display:block;
 }
-.car-marker::after {
-  content:"";
+.car-label {
   position:absolute;
-  left:8px;
-  right:8px;
-  bottom:-9px;
-  height:10px;
-  background:
-    radial-gradient(circle at left center,#020617 0 5px,transparent 6px),
-    radial-gradient(circle at right center,#020617 0 5px,transparent 6px);
+  left:50%;
+  bottom:-13px;
+  transform:translateX(-50%);
+  background:#020617;
+  color:#ffffff;
+  border:2px solid #ffffff;
+  border-radius:999px;
+  padding:2px 7px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.6px;
+  line-height:1;
 }
 @keyframes carBlink {
   0% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35); }
@@ -378,9 +371,9 @@ function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v
 function carIcon(){
   return L.divIcon({
     className: '',
-    html: '<div class="car-marker">VEH</div>',
-    iconSize: [58, 49],
-    iconAnchor: [29, 36]
+    html: '<div class="car-marker"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="#0891b2"/><path d="M20 21h24l4 13H16l4-13z" fill="#67e8f9"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="#0f766e"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label">VEH</span></div>',
+    iconSize: [64, 78],
+    iconAnchor: [32, 64]
   });
 }
 function initLeafletMaps(){
