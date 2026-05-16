@@ -395,7 +395,21 @@ body {
 }
 
 .camera-grid .camera {
-    height: 360px;
+    height: 320px;
+}
+
+.camera-map {
+    height: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1px solid #cbd5e1;
+}
+
+.camera-map iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 /* TABLE */
@@ -680,8 +694,11 @@ MT GPS</div>
 
 <div class="gps-help">
 <b>GPS Logger URL Format:</b><br>
-https://flaskgps.onrender.com/gps?id=v1&lat=%LAT&lon=%LON&speed=%SPD
-Vehicle 1 = v1, Vehicle 2 = v2, Vehicle 3 = v3, Vehicle 4 = v4
+Vehicle 1 GPS: https://flaskgps.onrender.com/gps?id=v1&lat=%LAT&lon=%LON&speed=0<br>
+Vehicle 2 GPS: https://flaskgps.onrender.com/gps?id=v2&lat=%LAT&lon=%LON&speed=0<br>
+Vehicle 3 GPS: https://flaskgps.onrender.com/gps?id=v3&lat=%LAT&lon=%LON&speed=0<br>
+Vehicle 4 GPS: https://flaskgps.onrender.com/gps?id=v4&lat=%LAT&lon=%LON&speed=0<br>
+Camera Push: car1, car2, car3, car4
 </div>
 
 <select id="vehicleSelect" onchange="changeVehicle()"></select>
@@ -732,7 +749,7 @@ Vehicle 1 = v1, Vehicle 2 = v2, Vehicle 3 = v3, Vehicle 4 = v4
 <div id="camera" class="page">
 
 <div class="title">📷 LIVE CAMERA VIEW</div>
-<div class="subtitle">Yaha sirf video active vehicles ke camera dikhenge</div>
+<div class="subtitle">Yaha 4 active vehicles ke camera aur GPS location dono dikhenge</div>
 
 <div class="camera-grid" id="cameraGrid"></div>
 
@@ -742,7 +759,7 @@ Vehicle 1 = v1, Vehicle 2 = v2, Vehicle 3 = v3, Vehicle 4 = v4
 <div id="vehicles" class="page">
 
 <div class="title">🚘 LIVE VEHICLES</div>
-<div class="subtitle">Sirf video active vehicles yaha show honge</div>
+<div class="subtitle">4 active vehicles ki live GPS location yaha show hogi</div>
 
 <div class="table">
 
@@ -806,7 +823,7 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<iframe src="https://vdo.ninja/?view=nRgmvm2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
+        camera: `<iframe src="https://vdo.ninja/?view=car1&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v2: {
         name: "Vehicle 2",
@@ -819,33 +836,33 @@ let vehicles = {
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7">`
+        camera: `<iframe src="https://vdo.ninja/?view=car2&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v3: {
         name: "Vehicle 3",
         lat: "19.0760",
         lon: "72.8777",
-        driver: "Vikram Singh",
-        plate: "MH 12 EF 9012",
+        driver: "DRIVER 3",
+        plate: "9012",
         location: "Mumbai",
         speed: "72 km/h",
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70">`
+        camera: `<iframe src="https://vdo.ninja/?view=car3&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     },
     v4: {
         name: "Vehicle 4",
         lat: "22.5726",
         lon: "88.3639",
-        driver: "Sanjay Kumar",
-        plate: "WB 08 GH 3456",
+        driver: "DRIVER 4",
+        plate: "3456",
         location: "Kolkata",
         speed: "53 km/h",
         lastUpdate: "No GPS Data",
         gpsActive: false,
         videoActive: true,
-        camera: `<img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d">`
+        camera: `<iframe src="https://vdo.ninja/?view=car4&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>`
     }
 };
 
@@ -957,8 +974,18 @@ function loadCameraViewOnlyActive() {
         card.className = "card";
         card.innerHTML = `
             <h2>🚘 ${v.name} - ${v.plate}</h2>
+            <div style="font-size:14px; color:#475569; line-height:1.7; margin-bottom:8px;">
+                <b>Driver:</b> ${v.driver} &nbsp; | &nbsp;
+                <b>Speed:</b> ${v.speed} &nbsp; | &nbsp;
+                <b>GPS:</b> ${v.gpsActive ? "GPS Live" : "Waiting GPS"}
+                <br>
+                <b>Location:</b> ${v.location}
+            </div>
             <div class="camera">
                 ${cameraHtml(id)}
+            </div>
+            <div class="camera-map">
+                <iframe src="https://maps.google.com/maps?q=${v.lat},${v.lon}&z=15&output=embed"></iframe>
             </div>
         `;
 
@@ -1106,6 +1133,9 @@ async function fetchGPSLoggerData() {
             document.getElementById("trackStatus").innerHTML = v.gpsActive ? "GPS Live" : "Waiting GPS";
         }
 
+        // Camera View page par 4 vehicles ke camera + map refresh honge
+        loadCameraViewOnlyActive();
+
     } catch (error) {
         console.log("GPS fetch error:", error);
     }
@@ -1236,7 +1266,7 @@ def receive_gps_logger():
         "lat": str(lat_float),
         "lon": str(lon_float),
         "speed": str(speed_float),
-        "last_update": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+        "last_update": datetime.now(timezone(timedelta(hours=5, minutes=30))).strftime("%d-%m-%Y %I:%M:%S %p"),
         "gps_active": True
     }
 
