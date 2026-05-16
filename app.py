@@ -500,7 +500,7 @@ function loadCameraViewOnlyActive(){
       <div class="vehicle-meta">
         <div class="meta-pill"><b>Driver:</b> ${v.driver}</div>
         <div class="meta-pill"><b>Plate:</b> ${v.plate}</div>
-        <div class="meta-pill"><b>Vehicle:</b> ${v.name}</div>
+        <div class="meta-pill"><b>Veh Type:</b> ${v.name}</div>
         <div class="meta-pill"><b>Mob No:</b> ${v.cameraId}</div>
       </div>
     `;
