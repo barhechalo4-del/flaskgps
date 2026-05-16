@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 IST = timezone(timedelta(hours=5, minutes=30))
 GPS_TIMEOUT_SECONDS = 60
+VIDEO_TIMEOUT_SECONDS = 60
 GPS_API_TOKEN = os.environ.get("GPS_API_TOKEN")
 
 
@@ -23,6 +24,9 @@ def make_vehicle(lat, lon):
         "last_update": "No GPS Data",
         "gps_active": False,
         "updated_at": None,
+        "video_active": False,
+        "video_last_update": "No Video Data",
+        "video_updated_at": None,
     }
 
 
@@ -36,12 +40,19 @@ gps_live_data = {
 
 def public_vehicle_data(data):
     updated_at = data.get("updated_at")
+    video_updated_at = data.get("video_updated_at")
     gps_active = bool(data.get("gps_active"))
+    video_active = bool(data.get("video_active"))
 
     if updated_at is None:
         gps_active = False
     elif (now_ist() - updated_at).total_seconds() > GPS_TIMEOUT_SECONDS:
         gps_active = False
+
+    if video_updated_at is None:
+        video_active = False
+    elif (now_ist() - video_updated_at).total_seconds() > VIDEO_TIMEOUT_SECONDS:
+        video_active = False
 
     return {
         "lat": data["lat"],
@@ -49,6 +60,8 @@ def public_vehicle_data(data):
         "speed": data["speed"],
         "last_update": data["last_update"],
         "gps_active": gps_active,
+        "video_active": video_active,
+        "video_last_update": data["video_last_update"],
     }
 
 
@@ -197,7 +210,7 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
   <div class="subtitle">GPS based vehicle tracking dashboard</div>
   <div class="stats">
     <div class="stat"><h3>Total Vehicles</h3><h2>4</h2></div>
-    <div class="stat"><h3>Video Active</h3><h2 id="activeCount">4</h2></div>
+    <div class="stat"><h3>Video Active</h3><h2 id="activeCount">0</h2></div>
     <div class="stat"><h3>GPS Live</h3><h2 id="gpsLiveCount">0</h2></div>
     <div class="stat"><h3>Selected Speed</h3><h2 id="selectedSpeed">--</h2></div>
   </div>
@@ -229,6 +242,7 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
     Vehicle 2: /gps?id=v2&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
     Vehicle 3: /gps?id=v3&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
     Vehicle 4: /gps?id=v4&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
+    Video active heartbeat: /video?id=v1<br>
     Token enabled ho to URL me &amp;token=YOUR_TOKEN add karein ya X-GPS-Token header bhejein.
   </div>
   <select id="vehicleSelect" onchange="changeVehicle()"></select>
@@ -270,10 +284,10 @@ let dashboardCameraVehicle = null;
 let trackingCameraVehicle = null;
 
 let vehicles = {
-  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:true, cameraId:"car1" },
-  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:true, cameraId:"car2" },
-  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:true, cameraId:"car3" },
-  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:true, cameraId:"car4" }
+  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car1" },
+  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car2" },
+  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car3" },
+  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"car4" }
 };
 
 function showPage(pageId, menuItem){
@@ -284,6 +298,7 @@ function showPage(pageId, menuItem){
   if(pageId === 'camera') loadCameraViewOnlyActive();
 }
 function activeBadge(){ return `<span class="live">Video Active</span>`; }
+function offlineBadge(){ return `<span class="offline">Video Offline</span>`; }
 function gpsLiveBadge(){ return `<span class="gps-live">GPS Live</span>`; }
 function waitingBadge(){ return `<span class="offline">Waiting GPS</span>`; }
 function cameraHtml(id){
@@ -297,7 +312,15 @@ function loadActiveVehiclesDropdown(){
   let select = document.getElementById('vehicleSelect');
   let currentValue = select.value;
   select.innerHTML = '';
-  getActiveVehicleIds().forEach(id=>{
+  let activeIds = getActiveVehicleIds();
+  if(activeIds.length === 0){
+    let opt = document.createElement('option');
+    opt.value = '';
+    opt.text = 'No video active vehicle';
+    select.appendChild(opt);
+    return;
+  }
+  activeIds.forEach(id=>{
     let v = vehicles[id];
     let opt = document.createElement('option');
     opt.value = id;
@@ -312,13 +335,14 @@ function updateRowsVisibility(){
   let gpsCount = 0;
   for(let id in vehicles){
     let v = vehicles[id];
+    let videoActive = v.videoActive === true;
     if(v.gpsActive) gpsCount++;
     ['dashRow-', 'vehicleRow-'].forEach(prefix=>{
       let row = document.getElementById(prefix + id);
       if(row){ row.style.display = 'table-row'; row.classList.toggle('active-row', id === activeVehicle); }
     });
-    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = activeBadge();
-    let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = activeBadge();
+    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = videoActive ? activeBadge() : offlineBadge();
+    let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = videoActive ? activeBadge() : offlineBadge();
     let dg = document.getElementById('dashGps-' + id); if(dg) dg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
     let vg = document.getElementById('vehicleGps-' + id); if(vg) vg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
   }
@@ -329,7 +353,12 @@ function updateRowsVisibility(){
 function loadCameraViewOnlyActive(){
   let grid = document.getElementById('cameraGrid');
   grid.innerHTML = '';
-  getActiveVehicleIds().forEach(id=>{
+  let activeIds = getActiveVehicleIds();
+  if(activeIds.length === 0){
+    grid.innerHTML = `<div class="card"><h2>No Video Active</h2><p>Abhi kisi vehicle ka camera active nahi hai.</p></div>`;
+    return;
+  }
+  activeIds.forEach(id=>{
     let v = vehicles[id];
     let card = document.createElement('div');
     card.className = 'card';
@@ -367,7 +396,10 @@ function updateCameraIfNeeded(id){
 
 function selectVehicle(id){
   let v = vehicles[id];
-  if(!v) return;
+  if(!v || v.videoActive !== true) {
+    showNoActiveVideo();
+    return;
+  }
   activeVehicle = id;
   let sel = document.getElementById('vehicleSelect'); if(sel) sel.value = id;
   updateMapForVehicle(id);
@@ -381,10 +413,29 @@ function selectVehicle(id){
   document.getElementById('trackLocation').innerHTML = v.location;
   document.getElementById('trackStatus').innerHTML = v.gpsActive ? 'GPS Live' : 'Waiting GPS';
   document.getElementById('selectedSpeed').innerHTML = v.speed;
-  document.getElementById('sidebarStatus').innerHTML = '&bull; 4 Vehicles Video Active';
+  document.getElementById('sidebarStatus').innerHTML = '&bull; ' + v.name + ' Video Active';
   updateRowsVisibility();
 }
 function changeVehicle(){ selectVehicle(document.getElementById('vehicleSelect').value); }
+
+function showNoActiveVideo(){
+  activeVehicle = null;
+  dashboardCameraVehicle = null;
+  trackingCameraVehicle = null;
+  document.getElementById('dashboardCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
+  document.getElementById('trackingCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
+  document.getElementById('topDriver').innerHTML = '--';
+  document.getElementById('topPlate').innerHTML = '--';
+  document.getElementById('topSpeed').innerHTML = '--';
+  document.getElementById('topStatus').innerHTML = 'No Video Active';
+  document.getElementById('trackDriver').innerHTML = '--';
+  document.getElementById('trackPlate').innerHTML = '--';
+  document.getElementById('trackLocation').innerHTML = '--';
+  document.getElementById('trackStatus').innerHTML = 'No Video Active';
+  document.getElementById('selectedSpeed').innerHTML = '--';
+  document.getElementById('sidebarStatus').innerHTML = '&bull; No Video Active';
+  updateRowsVisibility();
+}
 
 function updateVehicleTextFields(){
   for(let id in vehicles){
@@ -410,13 +461,17 @@ async function fetchGPSLoggerData(){
         vehicles[id].speed = data[id].speed + ' km/h';
         vehicles[id].lastUpdate = data[id].last_update;
         vehicles[id].gpsActive = data[id].gps_active;
+        vehicles[id].videoActive = data[id].video_active;
         if(data[id].gps_active === true) vehicles[id].location = data[id].lat + ', ' + data[id].lon;
       }
     }
     loadActiveVehiclesDropdown();
     updateVehicleTextFields();
     updateRowsVisibility();
+    let activeIds = getActiveVehicleIds();
     if(activeVehicle) selectVehicle(activeVehicle);
+    else if(activeIds.length > 0) selectVehicle(activeIds[0]);
+    else showNoActiveVideo();
     loadCameraViewOnlyActive();
   }catch(e){ console.log('GPS fetch error:', e); }
 }
@@ -426,6 +481,7 @@ function initDashboard(){
   updateRowsVisibility();
   let ids = getActiveVehicleIds();
   if(ids.length > 0) selectVehicle(ids[0]);
+  else showNoActiveVideo();
   fetchGPSLoggerData();
   setInterval(fetchGPSLoggerData, 5000);
 }
@@ -466,20 +522,50 @@ def receive_gps_logger():
     speed_float = parse_speed(speed)
     current_time = now_ist()
 
-    gps_live_data[vehicle_id] = {
+    vehicle = gps_live_data[vehicle_id]
+    vehicle.update({
         "lat": str(lat_float),
         "lon": str(lon_float),
         "speed": str(speed_float),
         "last_update": current_time.strftime("%d-%m-%Y %I:%M:%S %p"),
         "gps_active": True,
         "updated_at": current_time,
-    }
+    })
 
     return jsonify({
         "status": "success",
         "message": "GPS Logger data received",
         "vehicle_id": vehicle_id,
-        "data": public_vehicle_data(gps_live_data[vehicle_id]),
+        "data": public_vehicle_data(vehicle),
+    })
+
+
+@app.route("/video", methods=["GET", "POST"])
+@app.route("/camera", methods=["GET", "POST"])
+@app.route("/video-active", methods=["GET", "POST"])
+def receive_video_heartbeat():
+    data = merged_payload()
+
+    if not token_valid(data):
+        return jsonify({"status": "error", "message": "Invalid or missing GPS token"}), 401
+
+    vehicle_id = first_value(data, "id") or "v1"
+    if vehicle_id not in gps_live_data:
+        return jsonify({"status": "error", "message": "Invalid vehicle id. Use v1, v2, v3, v4"}), 400
+
+    current_time = now_ist()
+    vehicle = gps_live_data[vehicle_id]
+    vehicle.update({
+        "video_active": True,
+        "video_last_update": current_time.strftime("%d-%m-%Y %I:%M:%S %p"),
+        "video_updated_at": current_time,
+    })
+
+    return jsonify({
+        "status": "success",
+        "message": "Video heartbeat received",
+        "vehicle_id": vehicle_id,
+        "data": public_vehicle_data(vehicle),
     })
 
 
@@ -501,6 +587,11 @@ def gps_test_page():
     <a href="/gps?id=v2&lat=26.9220&lon=75.8000&speed=55{token_hint}">Update Vehicle 2 Test</a><br><br>
     <a href="/gps?id=v3&lat=19.0900&lon=72.8800&speed=60{token_hint}">Update Vehicle 3 Test</a><br><br>
     <a href="/gps?id=v4&lat=22.5800&lon=88.3700&speed=50{token_hint}">Update Vehicle 4 Test</a><br><br>
+    <p>Video active test links:</p>
+    <a href="/video?id=v1{token_hint}">Vehicle 1 Video Active</a><br><br>
+    <a href="/video?id=v2{token_hint}">Vehicle 2 Video Active</a><br><br>
+    <a href="/video?id=v3{token_hint}">Vehicle 3 Video Active</a><br><br>
+    <a href="/video?id=v4{token_hint}">Vehicle 4 Video Active</a><br><br>
     <p>After click, go back to dashboard.</p>
     <a href="/">Open Dashboard</a>
     """
