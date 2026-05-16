@@ -314,24 +314,19 @@ function cameraHtml(id){
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
 function getActiveVehicleIds(){ return Object.keys(vehicles).filter(id=>vehicles[id].videoActive === true); }
+function getGpsVehicleIds(){ return Object.keys(vehicles).filter(id=>vehicles[id].gpsActive === true); }
 
 function loadActiveVehiclesDropdown(){
   let select = document.getElementById('vehicleSelect');
   let currentValue = select.value;
   select.innerHTML = '';
-  let activeIds = getActiveVehicleIds();
-  if(activeIds.length === 0){
-    let opt = document.createElement('option');
-    opt.value = '';
-    opt.text = 'No video active vehicle';
-    select.appendChild(opt);
-    return;
-  }
-  activeIds.forEach(id=>{
+  Object.keys(vehicles).forEach(id=>{
     let v = vehicles[id];
     let opt = document.createElement('option');
     opt.value = id;
-    opt.text = `${v.name} - ${v.plate} - ${v.location}`;
+    let gpsText = v.gpsActive ? 'GPS Live' : 'Waiting GPS';
+    let videoText = v.videoActive ? 'Video Active' : 'Video Offline';
+    opt.text = `${v.name} - ${v.plate} - ${gpsText} - ${videoText}`;
     select.appendChild(opt);
   });
   if(currentValue && vehicles[currentValue]) select.value = currentValue;
@@ -391,6 +386,14 @@ function updateMapForVehicle(id){
 }
 
 function updateCameraIfNeeded(id){
+  let v = vehicles[id];
+  if(!v || v.videoActive !== true){
+    document.getElementById('dashboardCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
+    document.getElementById('trackingCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
+    dashboardCameraVehicle = null;
+    trackingCameraVehicle = null;
+    return;
+  }
   if(dashboardCameraVehicle !== id){
     document.getElementById('dashboardCamera').innerHTML = cameraHtml(id);
     dashboardCameraVehicle = id;
@@ -403,10 +406,7 @@ function updateCameraIfNeeded(id){
 
 function selectVehicle(id){
   let v = vehicles[id];
-  if(!v || v.videoActive !== true) {
-    showNoActiveVideo();
-    return;
-  }
+  if(!v) return;
   activeVehicle = id;
   let sel = document.getElementById('vehicleSelect'); if(sel) sel.value = id;
   updateMapForVehicle(id);
@@ -420,26 +420,16 @@ function selectVehicle(id){
   document.getElementById('trackLocation').innerHTML = v.location;
   document.getElementById('trackStatus').innerHTML = v.gpsActive ? 'GPS Live' : 'Waiting GPS';
   document.getElementById('selectedSpeed').innerHTML = v.speed;
-  document.getElementById('sidebarStatus').innerHTML = '&bull; ' + v.name + ' Video Active';
+  document.getElementById('sidebarStatus').innerHTML = v.videoActive ? '&bull; ' + v.name + ' Video Active' : '&bull; No Video Active';
   updateRowsVisibility();
 }
 function changeVehicle(){ selectVehicle(document.getElementById('vehicleSelect').value); }
 
 function showNoActiveVideo(){
-  activeVehicle = null;
   dashboardCameraVehicle = null;
   trackingCameraVehicle = null;
   document.getElementById('dashboardCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
   document.getElementById('trackingCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
-  document.getElementById('topDriver').innerHTML = '--';
-  document.getElementById('topPlate').innerHTML = '--';
-  document.getElementById('topSpeed').innerHTML = '--';
-  document.getElementById('topStatus').innerHTML = 'No Video Active';
-  document.getElementById('trackDriver').innerHTML = '--';
-  document.getElementById('trackPlate').innerHTML = '--';
-  document.getElementById('trackLocation').innerHTML = '--';
-  document.getElementById('trackStatus').innerHTML = 'No Video Active';
-  document.getElementById('selectedSpeed').innerHTML = '--';
   document.getElementById('sidebarStatus').innerHTML = '&bull; No Video Active';
   updateRowsVisibility();
 }
@@ -475,10 +465,10 @@ async function fetchGPSLoggerData(){
     loadActiveVehiclesDropdown();
     updateVehicleTextFields();
     updateRowsVisibility();
-    let activeIds = getActiveVehicleIds();
+    let gpsIds = getGpsVehicleIds();
     if(activeVehicle) selectVehicle(activeVehicle);
-    else if(activeIds.length > 0) selectVehicle(activeIds[0]);
-    else showNoActiveVideo();
+    else if(gpsIds.length > 0) selectVehicle(gpsIds[0]);
+    else selectVehicle('v1');
     loadCameraViewOnlyActive();
   }catch(e){ console.log('GPS fetch error:', e); }
 }
@@ -486,9 +476,7 @@ async function fetchGPSLoggerData(){
 function initDashboard(){
   loadActiveVehiclesDropdown();
   updateRowsVisibility();
-  let ids = getActiveVehicleIds();
-  if(ids.length > 0) selectVehicle(ids[0]);
-  else showNoActiveVideo();
+  selectVehicle('v1');
   fetchGPSLoggerData();
   setInterval(fetchGPSLoggerData, 5000);
 }
