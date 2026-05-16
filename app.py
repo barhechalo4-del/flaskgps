@@ -10,6 +10,12 @@ IST = timezone(timedelta(hours=5, minutes=30))
 GPS_TIMEOUT_SECONDS = 60
 VIDEO_TIMEOUT_SECONDS = 60
 GPS_API_TOKEN = os.environ.get("GPS_API_TOKEN")
+CAMERA_IDS = {
+    "v1": "car1",
+    "v2": "car2",
+    "v3": "car3",
+    "v4": "car4",
+}
 
 
 def now_ist():
@@ -242,6 +248,7 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
     Vehicle 2: /gps?id=v2&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
     Vehicle 3: /gps?id=v3&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
     Vehicle 4: /gps?id=v4&amp;lat=%LAT&amp;lon=%LON&amp;speed=%SPD<br>
+    Mobile camera link: /mobile-camera?id=v1<br>
     Video active heartbeat: /video?id=v1<br>
     Token enabled ho to URL me &amp;token=YOUR_TOKEN add karein ya X-GPS-Token header bhejein.
   </div>
@@ -569,6 +576,67 @@ def receive_video_heartbeat():
     })
 
 
+@app.route("/mobile-camera")
+def mobile_camera_page():
+    data = merged_payload()
+
+    if not token_valid(data):
+        return "Invalid or missing GPS token", 401
+
+    vehicle_id = first_value(data, "id") or "v1"
+    if vehicle_id not in gps_live_data:
+        return "Invalid vehicle id. Use v1, v2, v3, v4", 400
+
+    camera_id = CAMERA_IDS[vehicle_id]
+    token = first_value(data, "token", "api_token", "key") or ""
+    token_query = f"&token={token}" if token else ""
+    heartbeat_url = f"/video?id={vehicle_id}{token_query}"
+    vdo_push_url = f"https://vdo.ninja/?push={camera_id}"
+
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{vehicle_id.upper()} Mobile Camera</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {{ box-sizing:border-box; }}
+body {{ margin:0; background:#0f172a; color:white; font-family:Arial,sans-serif; }}
+.top {{ padding:14px; background:#020617; display:flex; gap:10px; align-items:center; justify-content:space-between; }}
+.title {{ font-weight:800; font-size:16px; }}
+.status {{ color:#22c55e; font-size:13px; font-weight:700; }}
+.open {{ color:white; background:#0891b2; text-decoration:none; padding:10px 12px; border-radius:10px; font-size:13px; font-weight:800; }}
+iframe {{ width:100vw; height:calc(100vh - 58px); border:0; display:block; background:#111827; }}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="title">{vehicle_id.upper()} Camera ({camera_id})</div>
+    <div class="status" id="status">Starting video heartbeat...</div>
+  </div>
+  <a class="open" href="{vdo_push_url}" target="_blank">Open Camera</a>
+</div>
+<iframe src="{vdo_push_url}" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>
+<script>
+const heartbeatUrl = "{heartbeat_url}";
+async function sendHeartbeat(){{
+  try {{
+    const response = await fetch(heartbeatUrl + "&ts=" + Date.now(), {{cache:"no-store"}});
+    document.getElementById("status").textContent = response.ok ? "Video active heartbeat running" : "Heartbeat error";
+  }} catch (error) {{
+    document.getElementById("status").textContent = "Heartbeat network error";
+  }}
+}}
+sendHeartbeat();
+setInterval(sendHeartbeat, 30000);
+</script>
+</body>
+</html>
+"""
+
+
 @app.route("/gps-data")
 def gps_data_api():
     return jsonify({
@@ -592,6 +660,11 @@ def gps_test_page():
     <a href="/video?id=v2{token_hint}">Vehicle 2 Video Active</a><br><br>
     <a href="/video?id=v3{token_hint}">Vehicle 3 Video Active</a><br><br>
     <a href="/video?id=v4{token_hint}">Vehicle 4 Video Active</a><br><br>
+    <p>Mobile camera links:</p>
+    <a href="/mobile-camera?id=v1{token_hint}">Vehicle 1 Mobile Camera</a><br><br>
+    <a href="/mobile-camera?id=v2{token_hint}">Vehicle 2 Mobile Camera</a><br><br>
+    <a href="/mobile-camera?id=v3{token_hint}">Vehicle 3 Mobile Camera</a><br><br>
+    <a href="/mobile-camera?id=v4{token_hint}">Vehicle 4 Mobile Camera</a><br><br>
     <p>After click, go back to dashboard.</p>
     <a href="/">Open Dashboard</a>
     """
