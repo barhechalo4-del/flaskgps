@@ -175,6 +175,12 @@ select { width:100%; padding:16px; border-radius:14px; background:#fff; color:#0
 
 <script>
 let activeVehicle = null;
+let currentDashboardCameraId = null;
+let currentTrackingCameraId = null;
+let lastDashboardMapSrc = '';
+let lastTrackingMapSrc = '';
+let cameraGridLoaded = false;
+let lastCameraMapSrc = {};
 
 let vehicles = {
   v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:true, cameraId:"car1" },
@@ -188,7 +194,7 @@ function showPage(pageId, menuItem){
   document.getElementById(pageId).classList.add('active');
   document.querySelectorAll('.menu div').forEach(i=>i.classList.remove('active-menu'));
   menuItem.classList.add('active-menu');
-  if(pageId === 'camera') loadCameraViewOnlyActive();
+  if(pageId === 'camera') { loadCameraViewOnlyActive(); updateCameraGridInfo(); }
 }
 function activeBadge(){ return `<span class="live">Video Active</span>`; }
 function gpsLiveBadge(){ return `<span class="gps-live">GPS Live</span>`; }
@@ -232,8 +238,11 @@ function updateRowsVisibility(){
 }
 
 function loadCameraViewOnlyActive(){
+  if(cameraGridLoaded) return; // camera iframe dobara create nahi hoga
+
   let grid = document.getElementById('cameraGrid');
   grid.innerHTML = '';
+
   getActiveVehicleIds().forEach(id=>{
     let v = vehicles[id];
     let card = document.createElement('div');
@@ -242,31 +251,82 @@ function loadCameraViewOnlyActive(){
       <h2>🚘 ${v.name} - ${v.plate}</h2>
       <div class="camera">${cameraHtml(id)}</div>
       <div class="vehicle-meta">
-        <div class="meta-pill"><b>Driver:</b> ${v.driver}</div>
-        <div class="meta-pill"><b>Speed:</b> ${v.speed}</div>
-        <div class="meta-pill"><b>GPS:</b> ${v.gpsActive ? 'Live' : 'Waiting GPS'}</div>
-        <div class="meta-pill"><b>Update:</b> ${v.lastUpdate}</div>
+        <div class="meta-pill"><b>Driver:</b> <span id="camDriver-${id}">${v.driver}</span></div>
+        <div class="meta-pill"><b>Speed:</b> <span id="camSpeed-${id}">${v.speed}</span></div>
+        <div class="meta-pill"><b>GPS:</b> <span id="camGps-${id}">${v.gpsActive ? 'Live' : 'Waiting GPS'}</span></div>
+        <div class="meta-pill"><b>Update:</b> <span id="camUpdate-${id}">${v.lastUpdate}</span></div>
       </div>
-      <div class="mini-map"><iframe src="${mapSrc(v, 15)}"></iframe></div>
+      <div class="mini-map"><iframe id="camMap-${id}" src="${mapSrc(v, 15)}"></iframe></div>
     `;
     grid.appendChild(card);
+    lastCameraMapSrc[id] = mapSrc(v, 15);
   });
+
+  cameraGridLoaded = true;
+}
+
+function updateCameraGridInfo(){
+  if(!cameraGridLoaded) return;
+
+  for(let id in vehicles){
+    let v = vehicles[id];
+    let setText = function(elId, text){
+      let el = document.getElementById(elId);
+      if(el && el.innerHTML !== text) el.innerHTML = text;
+    };
+
+    setText('camDriver-' + id, v.driver);
+    setText('camSpeed-' + id, v.speed);
+    setText('camGps-' + id, v.gpsActive ? 'Live' : 'Waiting GPS');
+    setText('camUpdate-' + id, v.lastUpdate);
+
+    let camMap = document.getElementById('camMap-' + id);
+    let newSrc = mapSrc(v, 15);
+    if(camMap && lastCameraMapSrc[id] !== newSrc){
+      camMap.src = newSrc;
+      lastCameraMapSrc[id] = newSrc;
+    }
+  }
+}
+
+function setSelectedCameraIfNeeded(id){
+  if(currentDashboardCameraId !== id){
+    document.getElementById('dashboardCamera').innerHTML = cameraHtml(id);
+    currentDashboardCameraId = id;
+  }
+
+  if(currentTrackingCameraId !== id){
+    document.getElementById('trackingCamera').innerHTML = cameraHtml(id);
+    currentTrackingCameraId = id;
+  }
 }
 
 function updateMapForVehicle(id){
   let v = vehicles[id];
-  document.getElementById('dashboardMap').src = mapSrc(v, 15);
-  document.getElementById('mapFrame').src = mapSrc(v, 15);
+
+  let dashboardSrc = mapSrc(v, 15);
+  if(lastDashboardMapSrc !== dashboardSrc){
+    document.getElementById('dashboardMap').src = dashboardSrc;
+    lastDashboardMapSrc = dashboardSrc;
+  }
+
+  let trackingSrc = mapSrc(v, 15);
+  if(lastTrackingMapSrc !== trackingSrc){
+    document.getElementById('mapFrame').src = trackingSrc;
+    lastTrackingMapSrc = trackingSrc;
+  }
 }
 
 function selectVehicle(id){
   let v = vehicles[id];
   if(!v) return;
+
   activeVehicle = id;
   let sel = document.getElementById('vehicleSelect'); if(sel) sel.value = id;
+
   updateMapForVehicle(id);
-  document.getElementById('dashboardCamera').innerHTML = cameraHtml(id);
-  document.getElementById('trackingCamera').innerHTML = cameraHtml(id);
+  setSelectedCameraIfNeeded(id); // camera sirf vehicle change hone par reload hoga
+
   document.getElementById('topDriver').innerHTML = v.driver;
   document.getElementById('topPlate').innerHTML = v.plate;
   document.getElementById('topSpeed').innerHTML = v.speed;
@@ -278,7 +338,6 @@ function selectVehicle(id){
   document.getElementById('selectedSpeed').innerHTML = v.speed;
   document.getElementById('sidebarStatus').innerHTML = '● 4 Vehicles Video Active';
   updateRowsVisibility();
-  loadCameraViewOnlyActive();
 }
 function changeVehicle(){ selectVehicle(document.getElementById('vehicleSelect').value); }
 
@@ -311,8 +370,19 @@ async function fetchGPSLoggerData(){
     }
     updateVehicleTextFields();
     updateRowsVisibility();
-    if(activeVehicle) selectVehicle(activeVehicle);
-    loadCameraViewOnlyActive();
+
+    // GPS refresh par camera iframe reload nahi hoga
+    if(activeVehicle){
+      let v = vehicles[activeVehicle];
+      updateMapForVehicle(activeVehicle);
+      document.getElementById('topSpeed').innerHTML = v.speed;
+      document.getElementById('selectedSpeed').innerHTML = v.speed;
+      document.getElementById('topStatus').innerHTML = v.gpsActive ? v.lastUpdate : 'Waiting GPS';
+      document.getElementById('trackLocation').innerHTML = v.location;
+      document.getElementById('trackStatus').innerHTML = v.gpsActive ? 'GPS Live' : 'Waiting GPS';
+    }
+
+    updateCameraGridInfo();
   }catch(e){ console.log('GPS fetch error:', e); }
 }
 
@@ -321,6 +391,7 @@ function initDashboard(){
   updateRowsVisibility();
   let ids = getActiveVehicleIds();
   if(ids.length > 0) selectVehicle(ids[0]);
+  loadCameraViewOnlyActive(); // 4 camera ek baar load honge, GPS refresh par reload nahi honge
   fetchGPSLoggerData();
   setInterval(fetchGPSLoggerData, 5000);
 }
