@@ -184,10 +184,9 @@ body { background:var(--canvas); color:var(--ink); overflow-x:hidden; }
 .grid,.camera-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
 .card { padding:14px; border-radius:8px; }
 .card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
-.map,.camera,.mini-map { overflow:hidden; border-radius:8px; background:#111827; }
+.map,.camera { overflow:hidden; border-radius:8px; background:#111827; }
 .map { height:330px; margin-top:10px; border:1px solid #cbd5e1; background:#e5e7eb; }
 .camera { height:330px; margin-top:10px; position:relative; }
-.mini-map { height:230px; margin-top:12px; border:1px solid #cbd5e1; background:#e5e7eb; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .map .leaflet-container { width:100%; height:100%; font:12px/1.4 Inter,Segoe UI,Arial,sans-serif; }
 .car-marker {
@@ -255,6 +254,12 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 .tracking-grid .map,.tracking-grid .camera { flex:1; height:auto; min-height:520px; }
 .vehicle-meta { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; color:#334155; font-size:14px; }
 .meta-pill { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-weight:700; }
+.camera-grid .card { display:flex; flex-direction:column; gap:10px; }
+.camera-grid .card h2 { margin-bottom:0; }
+.camera-grid .camera { height:300px; margin-top:0; }
+.camera-title-row { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.camera-title-row small { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+.camera-offline { height:100%; color:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:.4px; }
 @media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
@@ -487,25 +492,27 @@ function updateRowsVisibility(){
 function loadCameraViewOnlyActive(){
   let grid = document.getElementById('cameraGrid');
   grid.innerHTML = '';
-  let activeIds = getActiveVehicleIds();
-  if(activeIds.length === 0){
-    grid.innerHTML = `<div class="card"><h2>No Video Active</h2><p>Abhi kisi vehicle ka camera active nahi hai.</p></div>`;
-    return;
-  }
-  activeIds.forEach(id=>{
+  Object.keys(vehicles).forEach(id=>{
     let v = vehicles[id];
     let card = document.createElement('div');
     card.className = 'card';
+    let videoHtml = v.videoActive ? cameraHtml(id) : '<div class="camera-offline">VIDEO OFFLINE</div>';
+    let statusHtml = v.videoActive ? activeBadge() : offlineBadge();
     card.innerHTML = `
-      <h2>CAR - ${v.name} - ${v.plate}</h2>
-      <div class="camera">${cameraHtml(id)}</div>
+      <div class="camera-title-row">
+        <div>
+          <h2>${v.name}</h2>
+          <small>Plate: ${v.plate} | Driver: ${v.driver}</small>
+        </div>
+        ${statusHtml}
+      </div>
+      <div class="camera">${videoHtml}</div>
       <div class="vehicle-meta">
         <div class="meta-pill"><b>Driver:</b> ${v.driver}</div>
-        <div class="meta-pill"><b>Speed:</b> ${v.speed}</div>
-        <div class="meta-pill"><b>GPS:</b> ${v.gpsActive ? 'Live' : 'Waiting GPS'}</div>
-        <div class="meta-pill"><b>Update:</b> ${v.lastUpdate}</div>
+        <div class="meta-pill"><b>Plate:</b> ${v.plate}</div>
+        <div class="meta-pill"><b>Vehicle:</b> ${v.name}</div>
+        <div class="meta-pill"><b>Camera:</b> ${v.cameraId}</div>
       </div>
-      <div class="mini-map"><iframe src="${mapSrc(v, 15)}"></iframe></div>
     `;
     grid.appendChild(card);
   });
