@@ -500,7 +500,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 
 <div id="tracking" class="page">
   <div class="title">LIVE TRACKING</div>
-  <div class="subtitle">Dropdown me active vehicles dikhenge. GPS Logger se map update hoga.</div>
+  <div class="subtitle"></div>
   <select id="vehicleSelect" onchange="changeVehicle()"></select>
   <div class="tracking-info">
     <div class="box"><div class="label">Driver</div><div class="value" id="trackDriver">--</div></div>
@@ -516,13 +516,13 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 
 <div id="camera" class="page">
   <div class="title">LIVE CAMERA VIEW</div>
-  <div class="subtitle">4 vehicles ke camera aur GPS location yaha show honge.</div>
+  <div class="subtitle">.</div>
   <div class="camera-grid" id="cameraGrid"></div>
 </div>
 
 <div id="vehicles" class="page">
   <div class="title">LIVE VEHICLES</div>
-  <div class="subtitle">4 vehicles active hain.</div>
+  <div class="subtitle"></div>
   <div class="table"><table>
     <tr><th>Vehicle</th><th>Driver</th><th>Plate</th><th>Location</th><th>GPS Update</th><th>Video</th><th>GPS</th></tr>
     <tr id="vehicleRow-v1"><td>Vehicle 1</td><td>DRIVER 1</td><td>1234</td><td id="vehicleLocation-v1">Delhi</td><td id="gpsUpdate-v1">No GPS Data</td><td id="vehicleStatus-v1"></td><td id="vehicleGps-v1"></td></tr>
