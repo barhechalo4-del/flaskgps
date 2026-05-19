@@ -1,15 +1,19 @@
 import os
 from datetime import datetime, timedelta, timezone
+from functools import wraps
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, request, session, url_for
 
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret-key")
 
 IST = timezone(timedelta(hours=5, minutes=30))
 GPS_TIMEOUT_SECONDS = 60
 VIDEO_TIMEOUT_SECONDS = 60
 GPS_API_TOKEN = os.environ.get("GPS_API_TOKEN")
+DASHBOARD_USERNAME = os.environ.get("DASHBOARD_USERNAME", "admin")
+DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "admin")
 CAMERA_IDS = {
     "v1": "9100000001",
     "v2": "9100000002",
@@ -17,6 +21,17 @@ CAMERA_IDS = {
     "v4": "9100000004",
 }
 camera_enabled = {vehicle_id: True for vehicle_id in CAMERA_IDS}
+
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if session.get("logged_in") is True:
+            return view_func(*args, **kwargs)
+
+        return redirect(url_for("login", next=request.path))
+
+    return wrapped_view
 
 
 @app.after_request
@@ -168,6 +183,7 @@ def parse_accuracy(value):
 
 
 @app.route("/")
+@login_required
 def home():
     return r"""
 <!DOCTYPE html>
@@ -444,6 +460,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
     <div onclick="showPage('tracking', this)"><span class="icon">MAP</span><span>Live Tracking</span></div>
     <div onclick="showPage('camera', this)"><span class="icon">CAM</span><span>Camera View</span></div>
     <div onclick="showPage('vehicles', this)"><span class="icon">CAR</span><span>Vehicles</span></div>
+    <div onclick="window.location.href='/logout'"><span class="icon">OUT</span><span>Logout</span></div>
   </div>
   <div class="sidebar-card"><h4>System Status</h4><p id="sidebarStatus">&bull; Loading...</p><small>4 Camera + 4 GPS System</small></div>
 </div>
@@ -1019,6 +1036,134 @@ initDashboard();
 """
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = ""
+
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        if username == DASHBOARD_USERNAME and password == DASHBOARD_PASSWORD:
+            session["logged_in"] = True
+            next_url = request.args.get("next") or url_for("home")
+            if not next_url.startswith("/"):
+                next_url = url_for("home")
+            return redirect(next_url)
+
+        error = "Invalid username or password"
+
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>MT GPS Login</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {{ box-sizing:border-box; margin:0; padding:0; font-family:Inter,Segoe UI,Arial,sans-serif; }}
+body {{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  color:#e0f2fe;
+  background:
+    linear-gradient(90deg,rgba(34,211,238,.08) 1px,transparent 1px),
+    linear-gradient(180deg,rgba(34,211,238,.06) 1px,transparent 1px),
+    linear-gradient(135deg,#06101d,#082f3d 48%,#0f172a);
+  background-size:34px 34px,34px 34px,100% 100%;
+}}
+.login-card {{
+  width:min(430px,100%);
+  padding:28px;
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(12,74,110,.78),rgba(6,78,59,.42) 54%,rgba(15,23,42,.9));
+  border:1px solid rgba(103,232,249,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 26px 52px rgba(0,0,0,.36),8px 10px 0 rgba(0,0,0,.12);
+  position:relative;
+  overflow:hidden;
+}}
+.login-card::before {{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius:12px;
+  background:linear-gradient(120deg,rgba(255,255,255,.16),transparent 36%,rgba(34,211,238,.10));
+  pointer-events:none;
+}}
+.brand {{ display:flex; align-items:center; gap:16px; margin-bottom:26px; position:relative; }}
+.brand-icon {{
+  width:58px;
+  height:58px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  background:linear-gradient(145deg,#075985,#0f766e 65%,#14532d);
+  border:1px solid rgba(167,243,208,.24);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 14px 26px rgba(0,0,0,.28);
+}}
+h1 {{ font-size:28px; line-height:1; margin-bottom:7px; }}
+p {{ color:#b6c7d9; font-weight:700; font-size:13px; }}
+label {{ display:block; margin:14px 0 7px; color:#dbeafe; font-size:13px; font-weight:900; }}
+input {{
+  width:100%;
+  padding:14px 15px;
+  border-radius:8px;
+  border:1px solid rgba(148,221,232,.28);
+  background:rgba(2,6,23,.42);
+  color:#ffffff;
+  outline:none;
+  font-size:15px;
+  font-weight:700;
+}}
+input:focus {{ border-color:#22d3ee; box-shadow:0 0 0 4px rgba(34,211,238,.12); }}
+button {{
+  width:100%;
+  margin-top:20px;
+  padding:14px 16px;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+  color:#ffffff;
+  font-size:15px;
+  font-weight:900;
+  background:linear-gradient(135deg,#0891b2,#0f766e);
+  box-shadow:0 16px 28px rgba(8,145,178,.22),inset 0 1px 0 rgba(255,255,255,.2);
+}}
+.error {{ margin-top:14px; color:#fecaca; font-weight:900; font-size:13px; min-height:18px; }}
+</style>
+</head>
+<body>
+<form class="login-card" method="post">
+  <div class="brand">
+    <div class="brand-icon">GPS</div>
+    <div>
+      <h1>MT GPS</h1>
+      <p>Secure dashboard login</p>
+    </div>
+  </div>
+  <label for="username">Username</label>
+  <input id="username" name="username" autocomplete="username" required>
+  <label for="password">Password</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <button type="submit">LOGIN</button>
+  <div class="error">{error}</div>
+</form>
+</body>
+</html>
+"""
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/gps", methods=["GET", "POST"])
 @app.route("/gpslogger", methods=["GET", "POST"])
 @app.route("/log", methods=["GET", "POST"])
@@ -1103,6 +1248,7 @@ def receive_video_heartbeat():
 
 
 @app.route("/camera-toggle", methods=["GET", "POST"])
+@login_required
 def camera_toggle():
     data = merged_payload()
 
@@ -1207,6 +1353,7 @@ setInterval(keepScreenAwake, 15000);
 
 
 @app.route("/gps-data")
+@login_required
 def gps_data_api():
     return jsonify({
         vehicle_id: public_vehicle_data(data, vehicle_id)
@@ -1215,6 +1362,7 @@ def gps_data_api():
 
 
 @app.route("/gps-test")
+@login_required
 def gps_test_page():
     token_hint = "&token=YOUR_TOKEN" if GPS_API_TOKEN else ""
     return f"""
