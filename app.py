@@ -389,12 +389,13 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 .camera-grid .camera-title-row small { font-size:10px; font-weight:800; line-height:1.35; }
 .camera-grid .live,.camera-grid .offline,.camera-grid .gps-live,.camera-grid .camera-toggle,.camera-grid .record-btn { font-size:11px; padding:5px 8px; }
 .camera-title-row { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.camera-title-row > div:first-child { flex:1; min-width:0; }
 .camera-title-row small { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
-.camera-inline-meta { display:flex; flex-wrap:wrap; gap:4px 8px; margin-top:3px; color:#475569; }
+.camera-inline-meta { display:grid!important; grid-template-columns:repeat(4,minmax(max-content,1fr)); width:100%; column-gap:28px; row-gap:3px; margin-top:3px; color:#475569; align-items:center; }
 .camera-inline-meta span { white-space:nowrap; }
 .camera-offline { height:100%; color:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:900; background:linear-gradient(135deg,#111827,#172033); position:relative; }
 .camera-offline::after { content:""; position:absolute; left:18px; right:18px; top:18px; bottom:18px; border:1px solid rgba(148,163,184,.16); border-radius:8px; pointer-events:none; }
-@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
+@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .camera-inline-meta{grid-template-columns:repeat(2,minmax(max-content,1fr)); column-gap:14px;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
