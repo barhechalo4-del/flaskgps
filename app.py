@@ -16,6 +16,7 @@ CAMERA_IDS = {
     "v3": "9100000003",
     "v4": "9100000004",
 }
+camera_enabled = {vehicle_id: True for vehicle_id in CAMERA_IDS}
 
 
 @app.after_request
@@ -53,11 +54,12 @@ gps_live_data = {
 }
 
 
-def public_vehicle_data(data):
+def public_vehicle_data(data, vehicle_id=None):
     updated_at = data.get("updated_at")
     video_updated_at = data.get("video_updated_at")
     gps_active = bool(data.get("gps_active"))
-    video_active = bool(data.get("video_active"))
+    camera_on = bool(camera_enabled.get(vehicle_id, True))
+    video_active = bool(data.get("video_active")) and camera_on
 
     if updated_at is None:
         gps_active = False
@@ -76,6 +78,7 @@ def public_vehicle_data(data):
         "last_update": data["last_update"],
         "gps_active": gps_active,
         "video_active": video_active,
+        "camera_on": camera_on,
         "video_last_update": data["video_last_update"],
         "accuracy": data.get("accuracy"),
     }
@@ -223,6 +226,16 @@ body { background:var(--canvas); color:var(--ink); overflow-x:hidden; }
 .grid,.camera-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
 .card { padding:14px; border-radius:8px; }
 .card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
+.panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.panel-head h2 { margin-bottom:0; }
+.fullscreen-btn { width:38px; height:38px; border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; color:#0f172a; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; box-shadow:0 6px 14px rgba(15,23,42,.08); transition:.18s ease; }
+.fullscreen-btn:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
+.fullscreen-btn:focus { outline:3px solid rgba(8,145,178,.2); outline-offset:2px; }
+.fullscreen-target:fullscreen { background:#0f172a; padding:14px; display:flex; flex-direction:column; width:100vw; height:100vh; border-radius:0; }
+.fullscreen-target:fullscreen .map,.fullscreen-target:fullscreen .camera { flex:1; height:auto; min-height:0; margin-top:0; }
+.fullscreen-target:fullscreen .panel-head { color:#ffffff; }
+.fullscreen-target:fullscreen .panel-head h2 { color:#ffffff; }
+.fullscreen-target:fullscreen .fullscreen-btn { border-color:rgba(255,255,255,.25); background:rgba(255,255,255,.12); color:#ffffff; }
 .map,.camera { overflow:hidden; border-radius:8px; background:#111827; }
 .map { height:330px; margin-top:10px; border:1px solid #b8c7d9; background:#dbeafe; position:relative; box-shadow:inset 0 0 0 1px rgba(255,255,255,.65), inset 0 -30px 60px rgba(15,23,42,.08); }
 .camera { height:330px; margin-top:10px; position:relative; }
@@ -325,6 +338,12 @@ tr:hover { background:#f8fafc!important; }
 .live { background:#dcfce7; color:#16a34a; }
 .offline { background:#fee2e2; color:#dc2626; }
 .gps-live { background:#dbeafe; color:#2563eb; }
+.camera-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.camera-toggle { border:0; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:900; cursor:pointer; color:#ffffff; box-shadow:0 8px 16px rgba(15,23,42,.12); transition:.18s ease; }
+.camera-toggle.on { background:#16a34a; }
+.camera-toggle.off { background:#dc2626; }
+.camera-toggle:hover { transform:translateY(-1px); filter:brightness(1.04); }
+.camera-toggle:disabled { cursor:wait; opacity:.72; transform:none; }
 .vehicle-legend { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 18px; color:#334155; font-size:12px; font-weight:900; }
 .legend-item { display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:6px 10px; box-shadow:0 4px 12px rgba(15,23,42,.05); }
 .legend-dot { width:13px; height:13px; border-radius:50%; display:inline-block; }
@@ -370,8 +389,8 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
     <div class="stat"><h3>Selected Speed</h3><h2 id="selectedSpeed">--</h2></div>
   </div>
   <div class="grid">
-    <div class="card"><h2>MAP - Selected Vehicle GPS Tracking</h2><div class="map" id="dashboardMap"></div></div>
-    <div class="card"><h2>CAMERA - Selected Vehicle Camera</h2><div class="camera" id="dashboardCamera"></div></div>
+    <div class="card fullscreen-target" id="dashboardMapPanel"><div class="panel-head"><h2>MAP - Selected Vehicle GPS Tracking</h2><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardMapPanel')" title="Full screen map" aria-label="Full screen map">⛶</button></div><div class="map" id="dashboardMap"></div></div>
+    <div class="card fullscreen-target" id="dashboardCameraPanel"><div class="panel-head"><h2>CAMERA - Selected Vehicle Camera</h2><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardCameraPanel')" title="Full screen camera" aria-label="Full screen camera">⛶</button></div><div class="camera" id="dashboardCamera"></div></div>
   </div>
   <div class="vehicle-legend">
     <span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>V1</span>
@@ -442,13 +461,36 @@ let dashboardRoute = null;
 let trackingRoute = null;
 let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 let cameraGridState = {};
+const pageToken = new URLSearchParams(window.location.search).get('token') || new URLSearchParams(window.location.search).get('api_token') || new URLSearchParams(window.location.search).get('key') || '';
 
 let vehicles = {
-  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000001" },
-  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000002" },
-  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000003" },
-  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000004" }
+  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraOn:true, accuracy:null, cameraId:"9100000001" },
+  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraOn:true, accuracy:null, cameraId:"9100000002" },
+  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraOn:true, accuracy:null, cameraId:"9100000003" },
+  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraOn:true, accuracy:null, cameraId:"9100000004" }
 };
+
+async function toggleFullscreen(elementId){
+  let el = document.getElementById(elementId);
+  if(!el) return;
+  try{
+    if(document.fullscreenElement){
+      await document.exitFullscreen();
+    }else{
+      await el.requestFullscreen();
+    }
+  }catch(e){
+    console.log('Fullscreen error:', e);
+  }
+}
+
+document.addEventListener('fullscreenchange', ()=>{
+  setTimeout(()=>{
+    if(dashboardLeafletMap) dashboardLeafletMap.invalidateSize();
+    if(trackingLeafletMap) trackingLeafletMap.invalidateSize();
+    if(activeVehicle) updateMapForVehicle(activeVehicle);
+  }, 120);
+});
 
 function showPage(pageId, menuItem){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -466,6 +508,7 @@ function showPage(pageId, menuItem){
 }
 function activeBadge(){ return `<span class="live">Video Active</span>`; }
 function offlineBadge(){ return `<span class="offline">Video Offline</span>`; }
+function cameraOffBadge(){ return `<span class="offline">Camera Off</span>`; }
 function gpsLiveBadge(){ return `<span class="gps-live">GPS Live</span>`; }
 function waitingBadge(){ return `<span class="offline">Waiting GPS</span>`; }
 function gpsStatusText(v){
@@ -475,6 +518,30 @@ function gpsStatusText(v){
 function cameraHtml(id){
   let cam = vehicles[id].cameraId;
   return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" loading="eager" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
+}
+async function toggleCamera(id){
+  let v = vehicles[id];
+  if(!v) return;
+  let nextState = !v.cameraOn;
+  let btn = document.getElementById('cameraToggle-' + id);
+  if(btn) btn.disabled = true;
+  try{
+    let tokenPart = pageToken ? `&token=${encodeURIComponent(pageToken)}` : '';
+    let res = await fetch(`/camera-toggle?id=${id}&enabled=${nextState ? '1' : '0'}${tokenPart}&ts=${Date.now()}`, {method:'POST', cache:'no-store'});
+    let data = await res.json();
+    if(!res.ok) throw new Error(data.message || 'Camera toggle failed');
+    v.cameraOn = data.camera_on;
+    v.videoActive = data.video_active;
+    dashboardCameraVehicle = null;
+    trackingCameraVehicle = null;
+    updateRowsVisibility();
+    if(activeVehicle === id) selectVehicle(id);
+    loadCameraViewOnlyActive(true);
+  }catch(e){
+    console.log('Camera toggle error:', e);
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
 const vehicleColors = {
@@ -552,13 +619,14 @@ function updateRowsVisibility(){
   for(let id in vehicles){
     let v = vehicles[id];
     let videoActive = v.videoActive === true;
+    let videoStatus = !v.cameraOn ? cameraOffBadge() : (videoActive ? activeBadge() : offlineBadge());
     if(v.gpsActive) gpsCount++;
     ['dashRow-', 'vehicleRow-'].forEach(prefix=>{
       let row = document.getElementById(prefix + id);
       if(row){ row.style.display = 'table-row'; row.classList.toggle('active-row', id === activeVehicle); }
     });
-    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = videoActive ? activeBadge() : offlineBadge();
-    let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = videoActive ? activeBadge() : offlineBadge();
+    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = videoStatus;
+    let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = videoStatus;
     let dg = document.getElementById('dashGps-' + id); if(dg) dg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
     let vg = document.getElementById('vehicleGps-' + id); if(vg) vg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
   }
@@ -574,7 +642,7 @@ function loadCameraViewOnlyActive(force=false){
   }
   Object.keys(vehicles).forEach(id=>{
     let v = vehicles[id];
-    let state = `${v.videoActive === true}|${v.cameraId}`;
+    let state = `${v.videoActive === true}|${v.cameraOn === true}|${v.cameraId}`;
     let card = document.getElementById('cameraCard-' + id);
     if(card && cameraGridState[id] === state) return;
     if(!card){
@@ -584,15 +652,17 @@ function loadCameraViewOnlyActive(force=false){
       grid.appendChild(card);
     }
     cameraGridState[id] = state;
-    let videoHtml = v.videoActive ? cameraHtml(id) : '<div class="camera-offline">VIDEO OFFLINE</div>';
-    let statusHtml = v.videoActive ? activeBadge() : offlineBadge();
+    let videoHtml = !v.cameraOn ? '<div class="camera-offline">CAMERA OFF</div>' : (v.videoActive ? cameraHtml(id) : '<div class="camera-offline">VIDEO OFFLINE</div>');
+    let statusHtml = !v.cameraOn ? cameraOffBadge() : (v.videoActive ? activeBadge() : offlineBadge());
+    let toggleClass = v.cameraOn ? 'on' : 'off';
+    let toggleText = v.cameraOn ? 'ON' : 'OFF';
     card.innerHTML = `
       <div class="camera-title-row">
         <div>
           <h2>${v.name}</h2>
           <small>Plate: ${v.plate} | Driver: ${v.driver}</small>
         </div>
-        ${statusHtml}
+        <div class="camera-actions">${statusHtml}<button class="camera-toggle ${toggleClass}" id="cameraToggle-${id}" type="button" onclick="toggleCamera('${id}')">${toggleText}</button></div>
       </div>
       <div class="camera">${videoHtml}</div>
       <div class="vehicle-meta">
@@ -626,9 +696,10 @@ function updateMapForVehicle(id){
 
 function updateCameraIfNeeded(id){
   let v = vehicles[id];
-  if(!v || v.videoActive !== true){
-    document.getElementById('dashboardCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
-    document.getElementById('trackingCamera').innerHTML = '<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">NO VIDEO ACTIVE</div>';
+  if(!v || v.cameraOn !== true || v.videoActive !== true){
+    let message = v && v.cameraOn !== true ? 'CAMERA OFF' : 'NO VIDEO ACTIVE';
+    document.getElementById('dashboardCamera').innerHTML = `<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">${message}</div>`;
+    document.getElementById('trackingCamera').innerHTML = `<div style="color:white;display:flex;align-items:center;justify-content:center;height:100%;font-weight:bold;">${message}</div>`;
     dashboardCameraVehicle = null;
     trackingCameraVehicle = null;
     return;
@@ -698,6 +769,7 @@ async function fetchGPSLoggerData(){
         vehicles[id].lastUpdate = data[id].last_update;
         vehicles[id].gpsActive = data[id].gps_active;
         vehicles[id].videoActive = data[id].video_active;
+        vehicles[id].cameraOn = data[id].camera_on;
         vehicles[id].accuracy = data[id].accuracy;
         if(data[id].gps_active === true) vehicles[id].location = data[id].lat + ', ' + data[id].lon;
         addRoutePoint(id);
@@ -779,7 +851,7 @@ def receive_gps_logger():
         "status": "success",
         "message": "GPS Logger data received",
         "vehicle_id": vehicle_id,
-        "data": public_vehicle_data(vehicle),
+        "data": public_vehicle_data(vehicle, vehicle_id),
     })
 
 
@@ -808,7 +880,36 @@ def receive_video_heartbeat():
         "status": "success",
         "message": "Video heartbeat received",
         "vehicle_id": vehicle_id,
-        "data": public_vehicle_data(vehicle),
+        "data": public_vehicle_data(vehicle, vehicle_id),
+    })
+
+
+@app.route("/camera-toggle", methods=["GET", "POST"])
+def camera_toggle():
+    data = merged_payload()
+
+    if not token_valid(data):
+        return jsonify({"status": "error", "message": "Invalid or missing GPS token"}), 401
+
+    vehicle_id = first_value(data, "id") or "v1"
+    if vehicle_id not in gps_live_data:
+        return jsonify({"status": "error", "message": "Invalid vehicle id. Use v1, v2, v3, v4"}), 400
+
+    enabled_value = str(first_value(data, "enabled", "on", "camera_on") or "").strip().lower()
+    if enabled_value in ("1", "true", "yes", "on"):
+        camera_enabled[vehicle_id] = True
+    elif enabled_value in ("0", "false", "no", "off"):
+        camera_enabled[vehicle_id] = False
+    else:
+        return jsonify({"status": "error", "message": "Use enabled=1 or enabled=0"}), 400
+
+    public_data = public_vehicle_data(gps_live_data[vehicle_id], vehicle_id)
+    return jsonify({
+        "status": "success",
+        "vehicle_id": vehicle_id,
+        "camera_on": public_data["camera_on"],
+        "video_active": public_data["video_active"],
+        "data": public_data,
     })
 
 
@@ -890,7 +991,7 @@ setInterval(keepScreenAwake, 15000);
 @app.route("/gps-data")
 def gps_data_api():
     return jsonify({
-        vehicle_id: public_vehicle_data(data)
+        vehicle_id: public_vehicle_data(data, vehicle_id)
         for vehicle_id, data in gps_live_data.items()
     })
 
