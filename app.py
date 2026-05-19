@@ -255,6 +255,9 @@ body::before {
 .card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
 .panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .panel-head h2 { margin-bottom:0; }
+.map-actions { display:flex; align-items:center; gap:8px; }
+.map-mode-btn { border:0; border-radius:999px; padding:8px 12px; font-size:12px; font-weight:900; color:#ffffff; background:linear-gradient(135deg,#0ea5e9,#0f766e); cursor:pointer; box-shadow:0 8px 16px rgba(8,132,163,.18),inset 0 1px 0 rgba(255,255,255,.22); transition:.18s ease; }
+.map-mode-btn:hover { transform:translateY(-1px); filter:brightness(1.04); }
 .fullscreen-btn { width:38px; height:38px; border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; color:#0f172a; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; box-shadow:0 6px 14px rgba(15,23,42,.08); transition:.18s ease; }
 .fullscreen-btn:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
 .fullscreen-btn:focus { outline:3px solid rgba(8,145,178,.2); outline-offset:2px; }
@@ -270,6 +273,8 @@ body::before {
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .map .leaflet-container { width:100%; height:100%; font:12px/1.4 Inter,Segoe UI,Arial,sans-serif; }
 .map .leaflet-tile-pane { filter:saturate(1.12) contrast(1.03); }
+.map.earth-mode .leaflet-tile-pane { filter:saturate(1.18) contrast(1.08) brightness(.88); }
+.map.earth-mode::after { content:"3D EARTH SATELLITE"; position:absolute; left:12px; bottom:12px; z-index:500; color:#e0f2fe; background:rgba(2,6,23,.58); border:1px solid rgba(125,211,252,.26); border-radius:999px; padding:6px 10px; font-size:11px; font-weight:900; backdrop-filter:blur(8px); box-shadow:0 10px 20px rgba(0,0,0,.18); pointer-events:none; }
 .map .leaflet-control-zoom a { color:#0f172a; border-color:#cbd5e1; font-weight:900; }
 .map .leaflet-control-attribution { background:rgba(255,255,255,.78); color:#475569; font-weight:700; backdrop-filter:blur(8px); }
 .car-marker {
@@ -454,7 +459,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
     <div class="stat"><h3>Selected Speed</h3><h2 id="selectedSpeed">--</h2></div>
   </div>
   <div class="grid">
-    <div class="card fullscreen-target" id="dashboardMapPanel"><div class="panel-head"><h2>MAP - Selected Vehicle GPS Tracking</h2><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardMapPanel')" title="Full screen map" aria-label="Full screen map">⛶</button></div><div class="map" id="dashboardMap"></div></div>
+    <div class="card fullscreen-target" id="dashboardMapPanel"><div class="panel-head"><h2>MAP - Selected Vehicle GPS Tracking</h2><div class="map-actions"><button class="map-mode-btn" id="mapModeButton" type="button" onclick="toggleEarthMode()">3D SAT</button><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardMapPanel')" title="Full screen map" aria-label="Full screen map">⛶</button></div></div><div class="map" id="dashboardMap"></div></div>
     <div class="card fullscreen-target" id="dashboardCameraPanel"><div class="panel-head"><h2>CAMERA - Selected Vehicle Camera</h2><div class="camera-actions"><button class="camera-toggle on" id="selectedCameraToggle" type="button" onclick="toggleSelectedCamera()">ON</button><button class="record-btn" id="selectedRecordButton" type="button" onclick="recordSelectedCamera()">REC</button><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardCameraPanel')" title="Full screen camera" aria-label="Full screen camera">⛶</button></div></div><div class="camera" id="dashboardCamera"></div></div>
   </div>
   <div class="vehicle-legend">
@@ -539,6 +544,11 @@ let dashboardMarker = null;
 let trackingMarker = null;
 let dashboardRoute = null;
 let trackingRoute = null;
+let dashboardRoadLayer = null;
+let dashboardEarthLayer = null;
+let trackingRoadLayer = null;
+let trackingEarthLayer = null;
+let earthMode = true;
 let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 let cameraGridState = {};
 let cameraRecordings = {};
@@ -586,6 +596,49 @@ function showPage(pageId, menuItem){
       if(activeVehicle) updateMapForVehicle(activeVehicle);
     }, 100);
   }
+}
+function roadLayer(){
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  });
+}
+function earthLayer(){
+  return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: 'Tiles &copy; Esri'
+  });
+}
+function applyMapMode(){
+  let dashboardMapEl = document.getElementById('dashboardMap');
+  let trackingMapEl = document.getElementById('mapFrame');
+  let btn = document.getElementById('mapModeButton');
+
+  if(dashboardLeafletMap){
+    if(earthMode){
+      if(dashboardRoadLayer) dashboardLeafletMap.removeLayer(dashboardRoadLayer);
+      if(!dashboardLeafletMap.hasLayer(dashboardEarthLayer)) dashboardEarthLayer.addTo(dashboardLeafletMap);
+    }else{
+      if(dashboardEarthLayer) dashboardLeafletMap.removeLayer(dashboardEarthLayer);
+      if(!dashboardLeafletMap.hasLayer(dashboardRoadLayer)) dashboardRoadLayer.addTo(dashboardLeafletMap);
+    }
+  }
+  if(trackingLeafletMap){
+    if(earthMode){
+      if(trackingRoadLayer) trackingLeafletMap.removeLayer(trackingRoadLayer);
+      if(!trackingLeafletMap.hasLayer(trackingEarthLayer)) trackingEarthLayer.addTo(trackingLeafletMap);
+    }else{
+      if(trackingEarthLayer) trackingLeafletMap.removeLayer(trackingEarthLayer);
+      if(!trackingLeafletMap.hasLayer(trackingRoadLayer)) trackingRoadLayer.addTo(trackingLeafletMap);
+    }
+  }
+  if(dashboardMapEl) dashboardMapEl.classList.toggle('earth-mode', earthMode);
+  if(trackingMapEl) trackingMapEl.classList.toggle('earth-mode', earthMode);
+  if(btn) btn.textContent = earthMode ? 'ROAD' : '3D SAT';
+}
+function toggleEarthMode(){
+  earthMode = !earthMode;
+  applyMapMode();
 }
 function activeBadge(){ return `<span class="live">Video Active</span>`; }
 function offlineBadge(){ return `<span class="offline">Video Offline</span>`; }
@@ -738,12 +791,11 @@ function initLeafletMaps(){
   let start = [28.6139, 77.2090];
   dashboardLeafletMap = L.map('dashboardMap').setView(start, 13);
   trackingLeafletMap = L.map('mapFrame').setView(start, 15);
-  [dashboardLeafletMap, trackingLeafletMap].forEach(map=>{
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-  });
+  dashboardRoadLayer = roadLayer();
+  dashboardEarthLayer = earthLayer();
+  trackingRoadLayer = roadLayer();
+  trackingEarthLayer = earthLayer();
+  applyMapMode();
   dashboardMarker = L.marker(start, {icon: carIcon('v1')}).addTo(dashboardLeafletMap);
   trackingMarker = L.marker(start, {icon: carIcon('v1')}).addTo(trackingLeafletMap);
   dashboardRoute = L.polyline([], {color:'#0891b2', weight:6, opacity:.88, lineCap:'round', lineJoin:'round'}).addTo(dashboardLeafletMap);
