@@ -359,6 +359,7 @@ let trackingMarker = null;
 let dashboardRoute = null;
 let trackingRoute = null;
 let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
+let cameraGridState = {};
 
 let vehicles = {
   v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000001" },
@@ -479,13 +480,24 @@ function updateRowsVisibility(){
   document.getElementById('gpsLiveCount').innerHTML = gpsCount;
 }
 
-function loadCameraViewOnlyActive(){
+function loadCameraViewOnlyActive(force=false){
   let grid = document.getElementById('cameraGrid');
-  grid.innerHTML = '';
+  if(force){
+    grid.innerHTML = '';
+    cameraGridState = {};
+  }
   Object.keys(vehicles).forEach(id=>{
     let v = vehicles[id];
-    let card = document.createElement('div');
-    card.className = 'card';
+    let state = `${v.videoActive === true}|${v.cameraId}`;
+    let card = document.getElementById('cameraCard-' + id);
+    if(card && cameraGridState[id] === state) return;
+    if(!card){
+      card = document.createElement('div');
+      card.className = 'card';
+      card.id = 'cameraCard-' + id;
+      grid.appendChild(card);
+    }
+    cameraGridState[id] = state;
     let videoHtml = v.videoActive ? cameraHtml(id) : '<div class="camera-offline">VIDEO OFFLINE</div>';
     let statusHtml = v.videoActive ? activeBadge() : offlineBadge();
     card.innerHTML = `
@@ -504,7 +516,6 @@ function loadCameraViewOnlyActive(){
         <div class="meta-pill"><b>Mob No:</b> ${v.cameraId}</div>
       </div>
     `;
-    grid.appendChild(card);
   });
 }
 
@@ -612,7 +623,7 @@ async function fetchGPSLoggerData(){
     if(activeVehicle) selectVehicle(activeVehicle);
     else if(gpsIds.length > 0) selectVehicle(gpsIds[0]);
     else selectVehicle('v1');
-    loadCameraViewOnlyActive();
+    if(document.getElementById('camera').classList.contains('active')) loadCameraViewOnlyActive();
   }catch(e){ console.log('GPS fetch error:', e); }
 }
 
@@ -753,6 +764,7 @@ iframe {{ width:100vw; height:calc(100vh - 58px); border:0; display:block; backg
 <iframe src="{vdo_push_url}" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe>
 <script>
 const heartbeatUrl = "{heartbeat_url}";
+let wakeLock = null;
 async function sendHeartbeat(){{
   try {{
     const response = await fetch(heartbeatUrl + "&ts=" + Date.now(), {{cache:"no-store"}});
@@ -761,8 +773,21 @@ async function sendHeartbeat(){{
     document.getElementById("status").textContent = "Heartbeat network error";
   }}
 }}
+async function keepScreenAwake(){{
+  try {{
+    if ("wakeLock" in navigator && wakeLock === null) {{
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => {{ wakeLock = null; }});
+    }}
+  }} catch (error) {{}}
+}}
+document.addEventListener("visibilitychange", () => {{
+  if (document.visibilityState === "visible") keepScreenAwake();
+}});
 sendHeartbeat();
-setInterval(sendHeartbeat, 30000);
+keepScreenAwake();
+setInterval(sendHeartbeat, 5000);
+setInterval(keepScreenAwake, 15000);
 </script>
 </body>
 </html>
