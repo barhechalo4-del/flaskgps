@@ -344,6 +344,10 @@ tr:hover { background:#f8fafc!important; }
 .camera-toggle.off { background:#dc2626; }
 .camera-toggle:hover { transform:translateY(-1px); filter:brightness(1.04); }
 .camera-toggle:disabled { cursor:wait; opacity:.72; transform:none; }
+.record-btn { border:0; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:900; cursor:pointer; color:#ffffff; background:#ef4444; box-shadow:0 8px 16px rgba(239,68,68,.2); transition:.18s ease; }
+.record-btn.recording { background:#111827; color:#fecaca; box-shadow:0 0 0 3px rgba(239,68,68,.18),0 8px 16px rgba(15,23,42,.18); }
+.record-btn:hover { transform:translateY(-1px); filter:brightness(1.04); }
+.record-btn:disabled { cursor:wait; opacity:.72; transform:none; }
 .vehicle-legend { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 18px; color:#334155; font-size:12px; font-weight:900; }
 .legend-item { display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:6px 10px; box-shadow:0 4px 12px rgba(15,23,42,.05); }
 .legend-dot { width:13px; height:13px; border-radius:50%; display:inline-block; }
@@ -390,7 +394,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
   </div>
   <div class="grid">
     <div class="card fullscreen-target" id="dashboardMapPanel"><div class="panel-head"><h2>MAP - Selected Vehicle GPS Tracking</h2><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardMapPanel')" title="Full screen map" aria-label="Full screen map">⛶</button></div><div class="map" id="dashboardMap"></div></div>
-    <div class="card fullscreen-target" id="dashboardCameraPanel"><div class="panel-head"><h2>CAMERA - Selected Vehicle Camera</h2><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardCameraPanel')" title="Full screen camera" aria-label="Full screen camera">⛶</button></div><div class="camera" id="dashboardCamera"></div></div>
+    <div class="card fullscreen-target" id="dashboardCameraPanel"><div class="panel-head"><h2>CAMERA - Selected Vehicle Camera</h2><div class="camera-actions"><button class="camera-toggle on" id="selectedCameraToggle" type="button" onclick="toggleSelectedCamera()">ON</button><button class="record-btn" id="selectedRecordButton" type="button" onclick="recordSelectedCamera()">REC</button><button class="fullscreen-btn" type="button" onclick="toggleFullscreen('dashboardCameraPanel')" title="Full screen camera" aria-label="Full screen camera">⛶</button></div></div><div class="camera" id="dashboardCamera"></div></div>
   </div>
   <div class="vehicle-legend">
     <span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>V1</span>
@@ -461,6 +465,7 @@ let dashboardRoute = null;
 let trackingRoute = null;
 let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 let cameraGridState = {};
+let cameraRecordings = {};
 const pageToken = new URLSearchParams(window.location.search).get('token') || new URLSearchParams(window.location.search).get('api_token') || new URLSearchParams(window.location.search).get('key') || '';
 
 let vehicles = {
@@ -519,12 +524,102 @@ function cameraHtml(id){
   let cam = vehicles[id].cameraId;
   return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" loading="eager" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
 }
+function cameraToggleButton(id, scope='camera'){
+  let v = vehicles[id];
+  if(!v) return '';
+  let toggleClass = v.cameraOn ? 'on' : 'off';
+  let toggleText = v.cameraOn ? 'ON' : 'OFF';
+  return `<button class="camera-toggle ${toggleClass}" id="${scope}CameraToggle-${id}" data-camera-toggle="${id}" type="button" onclick="event.stopPropagation(); toggleCamera('${id}')">${toggleText}</button>`;
+}
+function recordButton(id, scope='camera'){
+  let recording = cameraRecordings[id];
+  let text = recording ? 'STOP REC' : 'REC';
+  let recordingClass = recording ? ' recording' : '';
+  return `<button class="record-btn${recordingClass}" id="${scope}RecordButton-${id}" data-record-button="${id}" type="button" onclick="event.stopPropagation(); toggleRecording('${id}')">${text}</button>`;
+}
+function updateRecordButtons(id){
+  let recording = cameraRecordings[id];
+  document.querySelectorAll(`[data-record-button="${id}"]`).forEach(btn=>{
+    btn.classList.toggle('recording', Boolean(recording));
+    btn.textContent = recording ? 'STOP REC' : 'REC';
+  });
+  updateSelectedRecordButton();
+}
+function updateSelectedRecordButton(){
+  let btn = document.getElementById('selectedRecordButton');
+  if(!btn || !activeVehicle) return;
+  let recording = cameraRecordings[activeVehicle];
+  btn.classList.toggle('recording', Boolean(recording));
+  btn.textContent = recording ? 'STOP REC' : 'REC';
+}
+function recordSelectedCamera(){
+  if(activeVehicle) toggleRecording(activeVehicle);
+}
+function saveRecording(id, chunks, mimeType){
+  let blob = new Blob(chunks, {type: mimeType || 'video/webm'});
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');
+  let stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = url;
+  a.download = `${id}-camera-recording-${stamp}.webm`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+async function toggleRecording(id){
+  if(cameraRecordings[id]){
+    cameraRecordings[id].recorder.stop();
+    cameraRecordings[id].stream.getTracks().forEach(track=>track.stop());
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia || !window.MediaRecorder){
+    alert('Recording is not supported in this browser.');
+    return;
+  }
+  try{
+    let stream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
+    let mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+    let chunks = [];
+    let recorder = new MediaRecorder(stream, {mimeType});
+    cameraRecordings[id] = {recorder, stream, chunks, mimeType};
+    updateRecordButtons(id);
+    recorder.ondataavailable = event=>{
+      if(event.data && event.data.size > 0) chunks.push(event.data);
+    };
+    recorder.onstop = ()=>{
+      saveRecording(id, chunks, mimeType);
+      delete cameraRecordings[id];
+      updateRecordButtons(id);
+    };
+    stream.getVideoTracks().forEach(track=>{
+      track.addEventListener('ended', ()=>{
+        if(cameraRecordings[id] && recorder.state !== 'inactive') recorder.stop();
+      });
+    });
+    recorder.start(1000);
+  }catch(e){
+    console.log('Recording cancelled/error:', e);
+  }
+}
+function updateSelectedCameraToggle(){
+  let btn = document.getElementById('selectedCameraToggle');
+  if(!btn || !activeVehicle || !vehicles[activeVehicle]) return;
+  let v = vehicles[activeVehicle];
+  btn.classList.toggle('on', v.cameraOn === true);
+  btn.classList.toggle('off', v.cameraOn !== true);
+  btn.textContent = v.cameraOn ? 'ON' : 'OFF';
+  updateSelectedRecordButton();
+}
+function toggleSelectedCamera(){
+  if(activeVehicle) toggleCamera(activeVehicle);
+}
 async function toggleCamera(id){
   let v = vehicles[id];
   if(!v) return;
   let nextState = !v.cameraOn;
-  let btn = document.getElementById('cameraToggle-' + id);
-  if(btn) btn.disabled = true;
+  let buttons = document.querySelectorAll(`[data-camera-toggle="${id}"]`);
+  buttons.forEach(btn=>btn.disabled = true);
   try{
     let tokenPart = pageToken ? `&token=${encodeURIComponent(pageToken)}` : '';
     let res = await fetch(`/camera-toggle?id=${id}&enabled=${nextState ? '1' : '0'}${tokenPart}&ts=${Date.now()}`, {method:'POST', cache:'no-store'});
@@ -535,12 +630,13 @@ async function toggleCamera(id){
     dashboardCameraVehicle = null;
     trackingCameraVehicle = null;
     updateRowsVisibility();
+    updateSelectedCameraToggle();
     if(activeVehicle === id) selectVehicle(id);
     loadCameraViewOnlyActive(true);
   }catch(e){
     console.log('Camera toggle error:', e);
   }finally{
-    if(btn) btn.disabled = false;
+    buttons.forEach(btn=>btn.disabled = false);
   }
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
@@ -625,7 +721,7 @@ function updateRowsVisibility(){
       let row = document.getElementById(prefix + id);
       if(row){ row.style.display = 'table-row'; row.classList.toggle('active-row', id === activeVehicle); }
     });
-    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = videoStatus;
+    let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = `<div class="camera-actions" style="justify-content:flex-start;">${videoStatus}${cameraToggleButton(id, 'dash')}${recordButton(id, 'dash')}</div>`;
     let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = videoStatus;
     let dg = document.getElementById('dashGps-' + id); if(dg) dg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
     let vg = document.getElementById('vehicleGps-' + id); if(vg) vg.innerHTML = v.gpsActive ? gpsLiveBadge() : waitingBadge();
@@ -654,15 +750,13 @@ function loadCameraViewOnlyActive(force=false){
     cameraGridState[id] = state;
     let videoHtml = !v.cameraOn ? '<div class="camera-offline">CAMERA OFF</div>' : (v.videoActive ? cameraHtml(id) : '<div class="camera-offline">VIDEO OFFLINE</div>');
     let statusHtml = !v.cameraOn ? cameraOffBadge() : (v.videoActive ? activeBadge() : offlineBadge());
-    let toggleClass = v.cameraOn ? 'on' : 'off';
-    let toggleText = v.cameraOn ? 'ON' : 'OFF';
     card.innerHTML = `
       <div class="camera-title-row">
         <div>
           <h2>${v.name}</h2>
           <small>Plate: ${v.plate} | Driver: ${v.driver}</small>
         </div>
-        <div class="camera-actions">${statusHtml}<button class="camera-toggle ${toggleClass}" id="cameraToggle-${id}" type="button" onclick="toggleCamera('${id}')">${toggleText}</button></div>
+        <div class="camera-actions">${statusHtml}${cameraToggleButton(id, 'grid')}${recordButton(id, 'grid')}</div>
       </div>
       <div class="camera">${videoHtml}</div>
       <div class="vehicle-meta">
@@ -732,6 +826,8 @@ function selectVehicle(id){
   document.getElementById('selectedSpeed').innerHTML = v.speed;
   document.getElementById('sidebarStatus').innerHTML = v.videoActive ? '&bull; ' + v.name + ' Video Active' : '&bull; No Video Active';
   updateRowsVisibility();
+  updateSelectedCameraToggle();
+  updateSelectedRecordButton();
 }
 function changeVehicle(){ selectVehicle(document.getElementById('vehicleSelect').value); }
 
