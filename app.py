@@ -224,47 +224,90 @@ body { background:var(--canvas); color:var(--ink); overflow-x:hidden; }
 .card { padding:14px; border-radius:8px; }
 .card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
 .map,.camera { overflow:hidden; border-radius:8px; background:#111827; }
-.map { height:330px; margin-top:10px; border:1px solid #cbd5e1; background:#e5e7eb; }
+.map { height:330px; margin-top:10px; border:1px solid #b8c7d9; background:#dbeafe; position:relative; box-shadow:inset 0 0 0 1px rgba(255,255,255,.65), inset 0 -30px 60px rgba(15,23,42,.08); }
 .camera { height:330px; margin-top:10px; position:relative; }
 iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .map .leaflet-container { width:100%; height:100%; font:12px/1.4 Inter,Segoe UI,Arial,sans-serif; }
+.map .leaflet-tile-pane { filter:saturate(1.12) contrast(1.03); }
+.map .leaflet-control-zoom a { color:#0f172a; border-color:#cbd5e1; font-weight:900; }
+.map .leaflet-control-attribution { background:rgba(255,255,255,.78); color:#475569; font-weight:700; backdrop-filter:blur(8px); }
 .car-marker {
-  width:64px;
-  height:64px;
+  width:74px;
+  height:74px;
   border-radius:50%;
-  background:#ffffff;
+  background:radial-gradient(circle at 35% 28%,#ffffff 0 20%,#ecfeff 42%,rgba(14,116,144,.92) 72%,rgba(2,6,23,.92) 100%);
   display:flex;
   align-items:center;
   justify-content:center;
   border:3px solid #0891b2;
-  box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35);
+  box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 18px 30px rgba(15,23,42,.42);
   position:relative;
+  transform-style:preserve-3d;
   animation:carBlink 1s infinite;
 }
+.car-marker::before {
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:50%;
+  background:conic-gradient(from 160deg,rgba(34,211,238,.0),rgba(34,211,238,.42),rgba(34,211,238,.0) 62%);
+  z-index:-1;
+  animation:radarSpin 2.4s linear infinite;
+}
+.car-marker::after {
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-15px;
+  width:42px;
+  height:14px;
+  border-radius:50%;
+  background:rgba(2,6,23,.38);
+  filter:blur(3px);
+  transform:translateX(-50%);
+  z-index:-2;
+}
 .car-logo {
-  width:48px;
-  height:48px;
+  width:58px;
+  height:58px;
   display:block;
+  filter:drop-shadow(0 8px 8px rgba(2,6,23,.42));
 }
 .car-label {
   position:absolute;
   left:50%;
-  bottom:-13px;
+  bottom:-17px;
   transform:translateX(-50%);
   background:#020617;
   color:#ffffff;
   border:2px solid #ffffff;
   border-radius:999px;
-  padding:2px 8px;
+  padding:3px 9px;
   font-size:9px;
   font-weight:900;
   letter-spacing:.6px;
   line-height:1;
+  box-shadow:0 7px 16px rgba(15,23,42,.25);
+}
+.car-heading {
+  position:absolute;
+  top:-16px;
+  left:50%;
+  width:0;
+  height:0;
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-bottom:14px solid #22d3ee;
+  filter:drop-shadow(0 4px 5px rgba(8,145,178,.4));
+  transform:translateX(-50%);
 }
 @keyframes carBlink {
-  0% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 8px 20px rgba(15,23,42,.35); }
-  70% { transform:scale(1.08); box-shadow:0 0 0 18px rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
-  100% { transform:scale(.96); box-shadow:0 0 0 0 rgba(8,145,178,0), 0 8px 20px rgba(15,23,42,.35); }
+  0% { transform:scale(.96) rotateX(12deg); box-shadow:0 0 0 0 rgba(8,145,178,.75), 0 18px 30px rgba(15,23,42,.42); }
+  70% { transform:scale(1.06) rotateX(12deg); box-shadow:0 0 0 20px rgba(8,145,178,0), 0 18px 30px rgba(15,23,42,.42); }
+  100% { transform:scale(.96) rotateX(12deg); box-shadow:0 0 0 0 rgba(8,145,178,0), 0 18px 30px rgba(15,23,42,.42); }
+}
+@keyframes radarSpin {
+  to { transform:rotate(360deg); }
 }
 .rec { position:absolute; top:12px; right:12px; background:#ef4444; color:white; padding:6px 11px; border-radius:999px; font-size:12px; font-weight:900; z-index:5; }
 .info,.tracking-info { margin-top:18px; gap:12px; }
@@ -447,9 +490,9 @@ function carIcon(id){
   let c = vehicleColor(id);
   return L.divIcon({
     className: '',
-    html: `<div class="car-marker" style="border-color:${c.main};box-shadow:0 0 0 0 ${c.main}bf,0 8px 20px rgba(15,23,42,.35);"><svg class="car-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 34h34l-5-13H20l-5 13z" fill="${c.main}"/><path d="M20 21h24l4 13H16l4-13z" fill="${c.roof}"/><path d="M12 34h40c3 0 6 3 6 6v7H6v-7c0-3 3-6 6-6z" fill="${c.body}"/><path d="M22 25h8v9H18l4-9zM34 25h8l4 9H34v-9z" fill="#ecfeff"/><circle cx="18" cy="48" r="6" fill="#020617"/><circle cx="46" cy="48" r="6" fill="#020617"/><circle cx="18" cy="48" r="2" fill="#94a3b8"/><circle cx="46" cy="48" r="2" fill="#94a3b8"/><path d="M9 40h48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg><span class="car-label" style="background:${c.main};">VEH TYPE</span></div>`,
-    iconSize: [64, 78],
-    iconAnchor: [32, 64]
+    html: `<div class="car-marker" style="border-color:${c.main};"><span class="car-heading" style="border-bottom-color:${c.main};"></span><svg class="car-logo" viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="body-${id}" x1="10" x2="62" y1="20" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${c.roof}"/><stop offset=".42" stop-color="${c.main}"/><stop offset="1" stop-color="${c.body}"/></linearGradient><linearGradient id="glass-${id}" x1="22" x2="50" y1="22" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f8fdff"/><stop offset="1" stop-color="#67e8f9"/></linearGradient></defs><path d="M16 36h40l-6-16H22l-6 16z" fill="url(#body-${id})"/><path d="M22 20h28l5 16H17l5-16z" fill="${c.main}" opacity=".92"/><path d="M25 24h22l3 11H21l4-11z" fill="url(#glass-${id})"/><path d="M12 36h48c3.8 0 7 3.2 7 7v8c0 2-1.6 3.5-3.5 3.5h-55C6.6 54.5 5 53 5 51v-8c0-3.8 3.2-7 7-7z" fill="url(#body-${id})"/><path d="M9 42c7 3.4 46 3.4 54 0" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".7"/><path d="M13 50h46" stroke="#020617" stroke-width="2" opacity=".25"/><circle cx="20" cy="55" r="7.5" fill="#020617"/><circle cx="52" cy="55" r="7.5" fill="#020617"/><circle cx="20" cy="55" r="3" fill="#cbd5e1"/><circle cx="52" cy="55" r="3" fill="#cbd5e1"/><path d="M8 45h7M57 45h7" stroke="#fef08a" stroke-width="3" stroke-linecap="round"/><path d="M25 25h10" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".78"/></svg><span class="car-label" style="background:${c.main};">LIVE GPS</span></div>`,
+    iconSize: [74, 90],
+    iconAnchor: [37, 74]
   });
 }
 function initLeafletMaps(){
@@ -464,8 +507,8 @@ function initLeafletMaps(){
   });
   dashboardMarker = L.marker(start, {icon: carIcon('v1')}).addTo(dashboardLeafletMap);
   trackingMarker = L.marker(start, {icon: carIcon('v1')}).addTo(trackingLeafletMap);
-  dashboardRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(dashboardLeafletMap);
-  trackingRoute = L.polyline([], {color:'#0891b2', weight:5, opacity:.85}).addTo(trackingLeafletMap);
+  dashboardRoute = L.polyline([], {color:'#0891b2', weight:6, opacity:.88, lineCap:'round', lineJoin:'round'}).addTo(dashboardLeafletMap);
+  trackingRoute = L.polyline([], {color:'#0891b2', weight:6, opacity:.88, lineCap:'round', lineJoin:'round'}).addTo(trackingLeafletMap);
 }
 function validLatLon(v){
   let lat = Number(v.lat);
@@ -572,8 +615,8 @@ function updateMapForVehicle(id){
   trackingMarker.setIcon(carIcon(id));
   dashboardMarker.setLatLng(point);
   trackingMarker.setLatLng(point);
-  dashboardRoute.setStyle({color: color});
-  trackingRoute.setStyle({color: color});
+  dashboardRoute.setStyle({color: color, weight: 6, opacity: .9});
+  trackingRoute.setStyle({color: color, weight: 6, opacity: .9});
   dashboardRoute.setLatLngs(routeHistory[id] || []);
   trackingRoute.setLatLngs(routeHistory[id] || []);
   dashboardLeafletMap.setView(point, Math.max(dashboardLeafletMap.getZoom(), 15));
