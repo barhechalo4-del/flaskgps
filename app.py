@@ -211,7 +211,7 @@ body::before {
   z-index:-1;
 }
 .layout { display:flex; min-height:100vh; background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(226,238,248,.78)); }
-.sidebar { width:326px; min-height:100vh; position:sticky; top:0; padding:34px 20px; background:linear-gradient(180deg,#06101d 0%,#08202d 48%,#0d1824 100%); border-right:1px solid rgba(94,234,212,.18); box-shadow:18px 0 40px rgba(15,23,42,.24); perspective:900px; }
+.sidebar { width:326px; min-height:100vh; position:sticky; top:0; padding:34px 20px; background:linear-gradient(180deg,#06101d 0%,#08202d 48%,#0d1824 100%); border-right:1px solid rgba(94,234,212,.18); box-shadow:18px 0 40px rgba(15,23,42,.24); perspective:900px; display:flex; flex-direction:column; }
 .sidebar::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,transparent,rgba(45,212,191,.09)); }
 .logo { display:flex; align-items:center; gap:18px; color:#e0faff; margin-bottom:38px; padding:24px 20px; min-height:104px; border-radius:8px; background:linear-gradient(145deg,rgba(12,74,110,.74),rgba(6,78,59,.42) 54%,rgba(15,23,42,.88)); border:1px solid rgba(103,232,249,.34); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -18px 28px rgba(2,6,23,.18),0 22px 36px rgba(0,0,0,.34),8px 10px 0 rgba(0,0,0,.12); position:relative; overflow:hidden; transform:rotateX(2deg) rotateY(-4deg); transform-style:preserve-3d; }
 .logo::before { content:""; position:absolute; inset:1px; border-radius:8px; background:linear-gradient(120deg,rgba(255,255,255,.18),transparent 32%,rgba(34,211,238,.12) 70%,transparent); pointer-events:none; }
@@ -222,13 +222,14 @@ body::before {
 .logo-text { font-size:30px; line-height:1; font-weight:900; transform:translateZ(12px); text-shadow:0 2px 12px rgba(34,211,238,.26); }
 .logo small { display:block; font-size:13px; color:#b6c7d9; margin-top:9px; font-weight:700; }
 .menu-title { color:#8ba0b8; font-size:12px; font-weight:900; margin:34px 4px 16px; text-transform:uppercase; }
-.menu div { display:flex; align-items:center; gap:16px; min-height:70px; padding:16px 17px; margin-bottom:16px; border-radius:8px; cursor:pointer; background:linear-gradient(145deg,rgba(30,64,85,.58),rgba(8,47,61,.34)); color:#d8e4f2; transition:.18s ease; font-size:16px; font-weight:900; border:1px solid rgba(148,221,232,.16); position:relative; overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -14px 24px rgba(2,6,23,.18),0 14px 24px rgba(0,0,0,.18); }
+.menu { flex:1; display:flex; flex-direction:column; min-height:430px; }
+.menu div { display:flex; align-items:center; gap:16px; min-height:76px; padding:18px 17px; margin-bottom:18px; border-radius:8px; cursor:pointer; background:linear-gradient(145deg,rgba(30,64,85,.58),rgba(8,47,61,.34)); color:#d8e4f2; transition:.18s ease; font-size:16px; font-weight:900; border:1px solid rgba(148,221,232,.16); position:relative; overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -14px 24px rgba(2,6,23,.18),0 14px 24px rgba(0,0,0,.18); }
 .menu div::before { content:""; position:absolute; inset:1px; border-radius:8px; background:linear-gradient(120deg,rgba(255,255,255,.12),transparent 38%,rgba(34,211,238,.09)); pointer-events:none; }
 .menu div::after { content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px; background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(34,211,238,.55),rgba(34,211,238,.0)); }
 .menu div:hover { background:linear-gradient(145deg,rgba(8,132,163,.58),rgba(13,82,92,.42)); color:#ffffff; border-color:rgba(94,234,212,.34); transform:translateX(4px) translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -14px 24px rgba(2,6,23,.16),0 18px 30px rgba(0,0,0,.24); }
 .menu div.active-menu { background:linear-gradient(145deg,rgba(8,132,163,.72),rgba(17,134,111,.38)); color:#d1fae5; border-color:rgba(34,211,238,.48); box-shadow:inset 4px 0 0 #22d3ee,inset 0 1px 0 rgba(255,255,255,.16),0 18px 32px rgba(8,145,178,.18); }
 .icon { width:42px; height:42px; border-radius:8px; background:linear-gradient(145deg,rgba(148,163,184,.22),rgba(15,23,42,.35)); font-size:11px; color:#e0f2fe; box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 16px rgba(0,0,0,.18); border:1px solid rgba(148,163,184,.12); }
-.sidebar-card { margin-top:38px; min-height:112px; padding:20px; border-radius:8px; background:linear-gradient(145deg,rgba(8,80,91,.72),rgba(6,78,59,.48) 58%,rgba(15,23,42,.74)); border:1px solid rgba(34,211,238,.36); box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -18px 28px rgba(2,6,23,.18),0 20px 32px rgba(0,0,0,.25); position:relative; overflow:hidden; }
+.sidebar-card { margin-top:auto; min-height:128px; padding:20px; border-radius:8px; background:linear-gradient(145deg,rgba(8,80,91,.72),rgba(6,78,59,.48) 58%,rgba(15,23,42,.74)); border:1px solid rgba(34,211,238,.36); box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -18px 28px rgba(2,6,23,.18),0 20px 32px rgba(0,0,0,.25); position:relative; overflow:hidden; }
 .sidebar-card::before { content:""; position:absolute; inset:1px; border-radius:8px; background:linear-gradient(120deg,rgba(255,255,255,.13),transparent 42%,rgba(34,197,94,.10)); pointer-events:none; }
 .sidebar-card::after { content:""; position:absolute; left:16px; right:16px; bottom:0; height:3px; background:linear-gradient(90deg,#22d3ee,#22c55e); box-shadow:0 0 16px rgba(34,211,238,.45); }
 .sidebar-card h4 { color:#f8fafc; font-size:15px; margin-bottom:12px; }
@@ -355,11 +356,13 @@ iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .label { font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:700; }
 .value { font-size:18px; font-weight:900; color:var(--accent-2); word-break:break-word; }
 #dashboard .subtitle { margin-bottom:10px; }
+#dashboard.active { display:flex; flex-direction:column; min-height:calc(100vh - 66px); }
 #dashboard .stats { gap:10px; margin-bottom:12px; }
 #dashboard .stat { padding:12px 14px; min-height:78px; }
 #dashboard .stat h2 { font-size:23px; margin-top:8px; }
-#dashboard .grid { gap:12px; }
-#dashboard .map,#dashboard .camera { height:255px; }
+#dashboard .grid { gap:12px; flex:1; min-height:330px; }
+#dashboard .grid .card { display:flex; flex-direction:column; min-height:0; }
+#dashboard .map,#dashboard .camera { flex:1; height:auto; min-height:330px; }
 #dashboard .vehicle-legend { margin:8px 0 10px; }
 #dashboard .info { gap:10px; margin-top:10px; margin-bottom:10px; }
 #dashboard .box { padding:10px 12px; }
@@ -423,7 +426,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 .camera-inline-meta span { white-space:nowrap; }
 .camera-offline { height:100%; color:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:900; background:linear-gradient(135deg,#111827,#172033); position:relative; }
 .camera-offline::after { content:""; position:absolute; left:18px; right:18px; top:18px; bottom:18px; border:1px solid rgba(148,163,184,.16); border-radius:8px; pointer-events:none; }
-@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .camera-inline-meta{grid-template-columns:repeat(2,minmax(max-content,1fr)); column-gap:14px;} .vehicle-slider{grid-auto-columns:minmax(260px,86vw);} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} #dashboard .map,#dashboard .camera{height:250px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
+@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .camera-inline-meta{grid-template-columns:repeat(2,minmax(max-content,1fr)); column-gap:14px;} .vehicle-slider{grid-auto-columns:minmax(260px,86vw);} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} #dashboard.active{min-height:auto;} #dashboard .grid{min-height:0;} #dashboard .map,#dashboard .camera{height:340px; min-height:340px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
