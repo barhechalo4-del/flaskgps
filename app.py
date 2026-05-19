@@ -1143,7 +1143,7 @@ button {{
     <div class="brand-icon">GPS</div>
     <div>
       <h1>MT GPS</h1>
-      <p>Secure dashboard login</p>
+      <p>MT Secured Vehicle Tracking System</p>
     </div>
   </div>
   <label for="username">Username</label>
