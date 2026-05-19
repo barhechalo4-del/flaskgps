@@ -242,7 +242,7 @@ body::before {
 .stat h3 { color:#475569; font-size:12px; font-weight:900; text-transform:uppercase; }
 .stat h2 { font-size:28px; line-height:1; margin-top:10px; color:var(--accent); font-weight:900; }
 .grid,.camera-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
-.camera-grid { grid-template-rows:repeat(2,minmax(0,1fr)); align-items:stretch; min-height:calc(100vh - 150px); }
+.camera-grid { grid-template-rows:repeat(2,minmax(0,1fr)); align-items:stretch; min-height:calc(100vh - 132px); }
 .card { padding:14px; border-radius:8px; }
 .card:hover,.stat:hover,.box:hover { border-color:rgba(8,132,163,.42); box-shadow:0 18px 38px rgba(15,23,42,.13), inset 0 1px 0 rgba(255,255,255,.76); }
 .card h2 { color:var(--ink); margin-bottom:10px; font-size:17px; line-height:1.2; font-weight:900; }
@@ -380,19 +380,21 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 .tracking-grid .map,.tracking-grid .camera { flex:1; height:auto; min-height:520px; }
 .vehicle-meta { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; color:#334155; font-size:14px; }
 .meta-pill { background:linear-gradient(180deg,#ffffff,#f7fbff); border:1px solid #d9e4ef; border-radius:8px; padding:10px; font-weight:800; box-shadow:inset 0 1px 0 rgba(255,255,255,.72); }
-.camera-grid .card { display:flex; flex-direction:column; gap:8px; min-height:0; padding:10px; }
+.camera-grid .card { display:flex; flex-direction:column; gap:8px; min-height:0; padding:9px; }
 .camera-grid .card h2 { margin-bottom:0; }
-.camera-grid .camera { flex:1; height:auto; min-height:190px; margin-top:0; }
+.camera-grid .camera { flex:1; height:auto; min-height:240px; margin-top:0; }
 .camera-grid .vehicle-meta { gap:6px; margin-top:0; font-size:12px; }
 .camera-grid .meta-pill { padding:7px 8px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .camera-grid .camera-title-row h2 { font-size:15px; }
-.camera-grid .camera-title-row small { font-size:11px; }
+.camera-grid .camera-title-row small { font-size:10px; font-weight:800; line-height:1.35; }
 .camera-grid .live,.camera-grid .offline,.camera-grid .gps-live,.camera-grid .camera-toggle,.camera-grid .record-btn { font-size:11px; padding:5px 8px; }
 .camera-title-row { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
 .camera-title-row small { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+.camera-inline-meta { display:flex; flex-wrap:wrap; gap:4px 8px; margin-top:3px; color:#475569; }
+.camera-inline-meta span { white-space:nowrap; }
 .camera-offline { height:100%; color:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:900; background:linear-gradient(135deg,#111827,#172033); position:relative; }
 .camera-offline::after { content:""; position:absolute; left:18px; right:18px; top:18px; bottom:18px; border:1px solid rgba(148,163,184,.16); border-radius:8px; pointer-events:none; }
-@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .camera-grid .camera{height:260px; min-height:260px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
+@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -781,17 +783,11 @@ function loadCameraViewOnlyActive(force=false){
       <div class="camera-title-row">
         <div>
           <h2>${v.name}</h2>
-          <small>Plate: ${v.plate} | Driver: ${v.driver}</small>
+          <small class="camera-inline-meta"><span>Driver: ${v.driver}</span><span>Plate: ${v.plate}</span><span>Veh Type: ${v.name}</span><span>Mob No: ${v.cameraId}</span></small>
         </div>
         <div class="camera-actions">${statusHtml}${cameraToggleButton(id, 'grid')}${recordButton(id, 'grid')}</div>
       </div>
       <div class="camera">${videoHtml}</div>
-      <div class="vehicle-meta">
-        <div class="meta-pill"><b>Driver:</b> ${v.driver}</div>
-        <div class="meta-pill"><b>Plate:</b> ${v.plate}</div>
-        <div class="meta-pill"><b>Veh Type:</b> ${v.name}</div>
-        <div class="meta-pill"><b>Mob No:</b> ${v.cameraId}</div>
-      </div>
     `;
   });
 }
