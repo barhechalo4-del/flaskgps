@@ -18,6 +18,14 @@ CAMERA_IDS = {
 }
 
 
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 def now_ist():
     return datetime.now(IST)
 
@@ -33,6 +41,7 @@ def make_vehicle(lat, lon):
         "video_active": False,
         "video_last_update": "No Video Data",
         "video_updated_at": None,
+        "accuracy": None,
     }
 
 
@@ -68,6 +77,7 @@ def public_vehicle_data(data):
         "gps_active": gps_active,
         "video_active": video_active,
         "video_last_update": data["video_last_update"],
+        "accuracy": data.get("accuracy"),
     }
 
 
@@ -118,13 +128,40 @@ def parse_coordinate(value, label, low, high):
     return number
 
 
-def parse_speed(value):
+def parse_speed(value, unit=None):
     try:
         speed = float(value)
     except (TypeError, ValueError):
         return 0.0
 
-    return max(speed, 0.0)
+    speed = max(speed, 0.0)
+    unit = (unit or "mps").strip().lower()
+
+    if unit in ("kmh", "kph", "km/h", "kmph"):
+        speed_kmh = speed
+    elif unit in ("mph", "mi/h"):
+        speed_kmh = speed * 1.609344
+    elif unit in ("kn", "knot", "knots"):
+        speed_kmh = speed * 1.852
+    else:
+        speed_kmh = speed * 3.6
+
+    return round(speed_kmh, 1)
+
+
+def parse_accuracy(value):
+    if value in (None, ""):
+        return None
+
+    try:
+        accuracy = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if accuracy < 0:
+        return None
+
+    return round(accuracy, 1)
 
 
 @app.route("/")
@@ -137,6 +174,8 @@ def home():
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://vdo.ninja">
+<link rel="dns-prefetch" href="https://vdo.ninja">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; font-family:Inter,Segoe UI,Arial,sans-serif; }
@@ -362,10 +401,10 @@ let routeHistory = { v1: [], v2: [], v3: [], v4: [] };
 let cameraGridState = {};
 
 let vehicles = {
-  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000001" },
-  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000002" },
-  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000003" },
-  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, cameraId:"9100000004" }
+  v1: { name:"Vehicle 1", lat:"28.6139", lon:"77.2090", driver:"DRIVER 1", plate:"1234", location:"Delhi", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000001" },
+  v2: { name:"Vehicle 2", lat:"26.9124", lon:"75.7873", driver:"DRIVER 2", plate:"5678", location:"Jaipur", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000002" },
+  v3: { name:"Vehicle 3", lat:"19.0760", lon:"72.8777", driver:"DRIVER 3", plate:"9012", location:"Mumbai", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000003" },
+  v4: { name:"Vehicle 4", lat:"22.5726", lon:"88.3639", driver:"DRIVER 4", plate:"3456", location:"Kolkata", speed:"0 km/h", lastUpdate:"No GPS Data", gpsActive:false, videoActive:false, accuracy:null, cameraId:"9100000004" }
 };
 
 function showPage(pageId, menuItem){
@@ -386,9 +425,13 @@ function activeBadge(){ return `<span class="live">Video Active</span>`; }
 function offlineBadge(){ return `<span class="offline">Video Offline</span>`; }
 function gpsLiveBadge(){ return `<span class="gps-live">GPS Live</span>`; }
 function waitingBadge(){ return `<span class="offline">Waiting GPS</span>`; }
+function gpsStatusText(v){
+  if(!v.gpsActive) return 'Waiting GPS';
+  return v.accuracy ? `GPS Live ±${v.accuracy} m` : 'GPS Live';
+}
 function cameraHtml(id){
   let cam = vehicles[id].cameraId;
-  return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
+  return `<iframe src="https://vdo.ninja/?view=${cam}&cleanoutput&transparent" loading="eager" allow="camera; microphone; autoplay; fullscreen" allowfullscreen></iframe><div class="rec">&bull; REC</div>`;
 }
 function mapSrc(v, zoom=15){ return `https://maps.google.com/maps?q=${v.lat},${v.lon}&z=${zoom}&output=embed`; }
 const vehicleColors = {
@@ -571,7 +614,7 @@ function selectVehicle(id){
   document.getElementById('trackDriver').innerHTML = v.driver;
   document.getElementById('trackPlate').innerHTML = v.plate;
   document.getElementById('trackLocation').innerHTML = v.location;
-  document.getElementById('trackStatus').innerHTML = v.gpsActive ? 'GPS Live' : 'Waiting GPS';
+  document.getElementById('trackStatus').innerHTML = gpsStatusText(v);
   document.getElementById('selectedSpeed').innerHTML = v.speed;
   document.getElementById('sidebarStatus').innerHTML = v.videoActive ? '&bull; ' + v.name + ' Video Active' : '&bull; No Video Active';
   updateRowsVisibility();
@@ -602,7 +645,7 @@ function updateVehicleTextFields(){
 
 async function fetchGPSLoggerData(){
   try{
-    let res = await fetch('/gps-data?ts=' + Date.now());
+    let res = await fetch('/gps-data?ts=' + Date.now(), {cache:'no-store'});
     let data = await res.json();
     for(let id in data){
       if(vehicles[id]){
@@ -612,6 +655,7 @@ async function fetchGPSLoggerData(){
         vehicles[id].lastUpdate = data[id].last_update;
         vehicles[id].gpsActive = data[id].gps_active;
         vehicles[id].videoActive = data[id].video_active;
+        vehicles[id].accuracy = data[id].accuracy;
         if(data[id].gps_active === true) vehicles[id].location = data[id].lat + ', ' + data[id].lon;
         addRoutePoint(id);
       }
@@ -633,7 +677,7 @@ function initDashboard(){
   updateRowsVisibility();
   selectVehicle('v1');
   fetchGPSLoggerData();
-  setInterval(fetchGPSLoggerData, 5000);
+  setInterval(fetchGPSLoggerData, 1000);
 }
 initDashboard();
 </script>
@@ -654,7 +698,9 @@ def receive_gps_logger():
     vehicle_id = first_value(data, "id") or "v1"
     lat = first_value(data, "lat", "latitude", "LAT", "Latitude")
     lon = first_value(data, "lon", "lng", "longitude", "LON", "Longitude")
-    speed = first_value(data, "speed", "spd", "SPD", "Speed") or "0"
+    speed = first_value(data, "speed_kmh", "speedKmh", "kmh", "speed", "spd", "SPD", "Speed") or "0"
+    speed_unit = first_value(data, "speed_unit", "unit", "speedUnit")
+    accuracy = parse_accuracy(first_value(data, "accuracy", "acc", "horizontal_accuracy", "hacc"))
 
     if vehicle_id not in gps_live_data:
         return jsonify({"status": "error", "message": "Invalid vehicle id. Use v1, v2, v3, v4"}), 400
@@ -666,10 +712,13 @@ def receive_gps_logger():
         return jsonify({
             "status": "error",
             "message": str(exc),
-            "example": "/gps?id=v1&lat=28.6200&lon=77.2300&speed=45",
+            "example": "/gps?id=v1&lat=28.6200&lon=77.2300&speed=12.5",
         }), 400
 
-    speed_float = parse_speed(speed)
+    if first_value(data, "speed_kmh", "speedKmh", "kmh") is not None and speed_unit is None:
+        speed_unit = "kmh"
+
+    speed_float = parse_speed(speed, speed_unit)
     current_time = now_ist()
 
     vehicle = gps_live_data[vehicle_id]
@@ -680,6 +729,7 @@ def receive_gps_logger():
         "last_update": current_time.strftime("%d-%m-%Y %I:%M:%S %p"),
         "gps_active": True,
         "updated_at": current_time,
+        "accuracy": accuracy,
     })
 
     return jsonify({
@@ -786,7 +836,7 @@ document.addEventListener("visibilitychange", () => {{
 }});
 sendHeartbeat();
 keepScreenAwake();
-setInterval(sendHeartbeat, 5000);
+setInterval(sendHeartbeat, 2000);
 setInterval(keepScreenAwake, 15000);
 </script>
 </body>
@@ -808,10 +858,10 @@ def gps_test_page():
     return f"""
     <h2>GPS Logger Test</h2>
     <p>Click test links:</p>
-    <a href="/gps?id=v1&lat=28.6200&lon=77.2300&speed=45{token_hint}">Update Vehicle 1 Test</a><br><br>
-    <a href="/gps?id=v2&lat=26.9220&lon=75.8000&speed=55{token_hint}">Update Vehicle 2 Test</a><br><br>
-    <a href="/gps?id=v3&lat=19.0900&lon=72.8800&speed=60{token_hint}">Update Vehicle 3 Test</a><br><br>
-    <a href="/gps?id=v4&lat=22.5800&lon=88.3700&speed=50{token_hint}">Update Vehicle 4 Test</a><br><br>
+    <a href="/gps?id=v1&lat=28.6200&lon=77.2300&speed=45&unit=kmh{token_hint}">Update Vehicle 1 Test</a><br><br>
+    <a href="/gps?id=v2&lat=26.9220&lon=75.8000&speed=55&unit=kmh{token_hint}">Update Vehicle 2 Test</a><br><br>
+    <a href="/gps?id=v3&lat=19.0900&lon=72.8800&speed=60&unit=kmh{token_hint}">Update Vehicle 3 Test</a><br><br>
+    <a href="/gps?id=v4&lat=22.5800&lon=88.3700&speed=50&unit=kmh{token_hint}">Update Vehicle 4 Test</a><br><br>
     <p>Video active test links:</p>
     <a href="/video?id=v1{token_hint}">Vehicle 1 Video Active</a><br><br>
     <a href="/video?id=v2{token_hint}">Vehicle 2 Video Active</a><br><br>
