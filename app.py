@@ -221,15 +221,19 @@ body::before {
 .logo-icon { width:64px; height:64px; border-radius:8px; background:linear-gradient(145deg,#075985,#0f766e 65%,#14532d); color:#d1fae5; font-size:13px; box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 14px 26px rgba(0,0,0,.34); transform:translateZ(18px); border:1px solid rgba(167,243,208,.24); }
 .logo-text { font-size:30px; line-height:1; font-weight:900; transform:translateZ(12px); text-shadow:0 2px 12px rgba(34,211,238,.26); }
 .logo small { display:block; font-size:13px; color:#b6c7d9; margin-top:9px; font-weight:700; }
-.menu-title { color:#7b8ca2; font-size:12px; font-weight:900; margin:30px 8px 14px; text-transform:uppercase; }
-.menu div { display:flex; align-items:center; gap:15px; min-height:58px; padding:13px 15px; margin-bottom:12px; border-radius:8px; cursor:pointer; background:rgba(255,255,255,.025); color:#cbd5e1; transition:.18s ease; font-size:15px; font-weight:800; border:1px solid rgba(148,163,184,.08); position:relative; }
-.menu div:hover { background:rgba(255,255,255,.08); color:#ffffff; border-color:rgba(94,234,212,.22); transform:translateX(2px); }
-.menu div.active-menu { background:linear-gradient(135deg,rgba(8,132,163,.45),rgba(17,134,111,.18)); color:#a7f3d0; border-color:rgba(34,211,238,.36); box-shadow:inset 3px 0 0 #22d3ee,0 12px 26px rgba(8,145,178,.12); }
-.icon { width:34px; height:34px; border-radius:8px; background:rgba(148,163,184,.14); font-size:10px; color:#dbeafe; box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }
-.sidebar-card { margin-top:32px; padding:18px; border-radius:8px; background:linear-gradient(135deg,rgba(8,47,61,.95),rgba(6,78,59,.58)); border:1px solid rgba(34,211,238,.26); box-shadow:0 16px 28px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.08); }
-.sidebar-card h4 { color:#f8fafc; font-size:13px; margin-bottom:9px; }
-.sidebar-card p { color:#22c55e; font-size:13px; font-weight:900; }
-.sidebar-card small { display:block; color:#a6b3c4; font-size:11px; margin-top:8px; }
+.menu-title { color:#8ba0b8; font-size:12px; font-weight:900; margin:34px 4px 16px; text-transform:uppercase; }
+.menu div { display:flex; align-items:center; gap:16px; min-height:70px; padding:16px 17px; margin-bottom:16px; border-radius:8px; cursor:pointer; background:linear-gradient(145deg,rgba(30,64,85,.58),rgba(8,47,61,.34)); color:#d8e4f2; transition:.18s ease; font-size:16px; font-weight:900; border:1px solid rgba(148,221,232,.16); position:relative; overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -14px 24px rgba(2,6,23,.18),0 14px 24px rgba(0,0,0,.18); }
+.menu div::before { content:""; position:absolute; inset:1px; border-radius:8px; background:linear-gradient(120deg,rgba(255,255,255,.12),transparent 38%,rgba(34,211,238,.09)); pointer-events:none; }
+.menu div::after { content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px; background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(34,211,238,.55),rgba(34,211,238,.0)); }
+.menu div:hover { background:linear-gradient(145deg,rgba(8,132,163,.58),rgba(13,82,92,.42)); color:#ffffff; border-color:rgba(94,234,212,.34); transform:translateX(4px) translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -14px 24px rgba(2,6,23,.16),0 18px 30px rgba(0,0,0,.24); }
+.menu div.active-menu { background:linear-gradient(145deg,rgba(8,132,163,.72),rgba(17,134,111,.38)); color:#d1fae5; border-color:rgba(34,211,238,.48); box-shadow:inset 4px 0 0 #22d3ee,inset 0 1px 0 rgba(255,255,255,.16),0 18px 32px rgba(8,145,178,.18); }
+.icon { width:42px; height:42px; border-radius:8px; background:linear-gradient(145deg,rgba(148,163,184,.22),rgba(15,23,42,.35)); font-size:11px; color:#e0f2fe; box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 16px rgba(0,0,0,.18); border:1px solid rgba(148,163,184,.12); }
+.sidebar-card { margin-top:38px; min-height:112px; padding:20px; border-radius:8px; background:linear-gradient(145deg,rgba(8,80,91,.72),rgba(6,78,59,.48) 58%,rgba(15,23,42,.74)); border:1px solid rgba(34,211,238,.36); box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -18px 28px rgba(2,6,23,.18),0 20px 32px rgba(0,0,0,.25); position:relative; overflow:hidden; }
+.sidebar-card::before { content:""; position:absolute; inset:1px; border-radius:8px; background:linear-gradient(120deg,rgba(255,255,255,.13),transparent 42%,rgba(34,197,94,.10)); pointer-events:none; }
+.sidebar-card::after { content:""; position:absolute; left:16px; right:16px; bottom:0; height:3px; background:linear-gradient(90deg,#22d3ee,#22c55e); box-shadow:0 0 16px rgba(34,211,238,.45); }
+.sidebar-card h4 { color:#f8fafc; font-size:15px; margin-bottom:12px; }
+.sidebar-card p { color:#22c55e; font-size:15px; font-weight:900; }
+.sidebar-card small { display:block; color:#b9c7d8; font-size:12px; margin-top:12px; font-weight:700; }
 .main { flex:1; min-width:0; padding:24px 28px 34px; position:relative; }
 .main::before { content:""; display:block; height:5px; margin:-24px -28px 22px; background:linear-gradient(90deg,#0784a3,#11866f,#d99a22,#e11d48); box-shadow:0 8px 18px rgba(8,132,163,.18); }
 .page { display:none; }
@@ -350,6 +354,28 @@ iframe,img { width:100%; height:100%; border:none; object-fit:cover; }
 .box { padding:14px; border-radius:8px; border-left:4px solid var(--accent); }
 .label { font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:700; }
 .value { font-size:18px; font-weight:900; color:var(--accent-2); word-break:break-word; }
+#dashboard .subtitle { margin-bottom:10px; }
+#dashboard .stats { gap:10px; margin-bottom:12px; }
+#dashboard .stat { padding:12px 14px; min-height:78px; }
+#dashboard .stat h2 { font-size:23px; margin-top:8px; }
+#dashboard .grid { gap:12px; }
+#dashboard .map,#dashboard .camera { height:255px; }
+#dashboard .vehicle-legend { margin:8px 0 10px; }
+#dashboard .info { gap:10px; margin-top:10px; margin-bottom:10px; }
+#dashboard .box { padding:10px 12px; }
+#dashboard .label { margin-bottom:4px; }
+#dashboard .value { font-size:15px; }
+.vehicle-slider { margin-top:10px; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(260px,1fr); gap:10px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x mandatory; padding:4px 2px 8px; }
+.vehicle-slider::-webkit-scrollbar { height:8px; }
+.vehicle-slider::-webkit-scrollbar-track { background:rgba(148,163,184,.18); border-radius:999px; }
+.vehicle-slider::-webkit-scrollbar-thumb { background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:999px; }
+.vehicle-slide { scroll-snap-align:start; cursor:pointer; display:grid; grid-template-columns:1fr auto; gap:8px 10px; align-items:center; min-height:92px; padding:12px; border-radius:8px; background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(239,248,250,.82)); border:1px solid rgba(148,163,184,.34); box-shadow:0 12px 24px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.72); }
+.vehicle-slide:hover { border-color:rgba(8,132,163,.42); transform:translateY(-1px); }
+.vehicle-slide.active-row { background:linear-gradient(145deg,#ecfeff,#f8fffb)!important; box-shadow:inset 4px 0 0 var(--accent),0 14px 26px rgba(8,132,163,.12); }
+.vehicle-slide-title { font-size:14px; font-weight:900; color:#0f172a; }
+.vehicle-slide-meta { display:flex; flex-wrap:wrap; gap:5px 12px; color:#475569; font-size:11px; font-weight:800; grid-column:1 / -1; }
+.vehicle-slide-meta span { white-space:nowrap; }
+.vehicle-slide-status { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
 .table { margin-top:18px; border-radius:8px; overflow:auto; }
 table { width:100%; border-collapse:collapse; }
 th,td { padding:12px; text-align:left; border-bottom:1px solid #e2e8f0; font-size:13px; white-space:nowrap; }
@@ -397,7 +423,7 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
 .camera-inline-meta span { white-space:nowrap; }
 .camera-offline { height:100%; color:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:900; background:linear-gradient(135deg,#111827,#172033); position:relative; }
 .camera-offline::after { content:""; position:absolute; left:18px; right:18px; top:18px; bottom:18px; border:1px solid rgba(148,163,184,.16); border-radius:8px; pointer-events:none; }
-@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .camera-inline-meta{grid-template-columns:repeat(2,minmax(max-content,1fr)); column-gap:14px;} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
+@media(max-width:1000px){ .layout{display:block;} .sidebar{display:none;} .grid,.camera-grid,.stats,.info,.tracking-info{grid-template-columns:1fr;} .camera-grid{grid-template-rows:none; min-height:0;} .camera-inline-meta{grid-template-columns:repeat(2,minmax(max-content,1fr)); column-gap:14px;} .vehicle-slider{grid-auto-columns:minmax(260px,86vw);} .main{padding:16px;} .title{font-size:26px;} .map,.camera{height:360px;} #dashboard .map,#dashboard .camera{height:250px;} .camera-grid .camera{height:320px; min-height:320px;} .tracking-grid .map,.tracking-grid .camera{height:420px; min-height:420px;} th,td{padding:10px; font-size:12px;} .vehicle-meta{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -440,13 +466,28 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(8,145,178,.
     <div class="box"><div class="label">Speed</div><div class="value" id="topSpeed">--</div></div>
     <div class="box"><div class="label">GPS Last Update</div><div class="value" id="topStatus">--</div></div>
   </div>
-  <div class="table"><table>
-    <tr><th>Vehicle</th><th>Driver</th><th>Plate</th><th>Location</th><th>Speed</th><th>Video</th><th>GPS</th></tr>
-    <tr id="dashRow-v1" onclick="selectVehicle('v1')" style="cursor:pointer;"><td>Vehicle 1</td><td>DRIVER 1</td><td>1234</td><td id="dashLocation-v1">Delhi</td><td id="dashSpeed-v1">0 km/h</td><td id="dashStatus-v1"></td><td id="dashGps-v1"></td></tr>
-    <tr id="dashRow-v2" onclick="selectVehicle('v2')" style="cursor:pointer;"><td>Vehicle 2</td><td>DRIVER 2</td><td>5678</td><td id="dashLocation-v2">Jaipur</td><td id="dashSpeed-v2">0 km/h</td><td id="dashStatus-v2"></td><td id="dashGps-v2"></td></tr>
-    <tr id="dashRow-v3" onclick="selectVehicle('v3')" style="cursor:pointer;"><td>Vehicle 3</td><td>DRIVER 3</td><td>9012</td><td id="dashLocation-v3">Mumbai</td><td id="dashSpeed-v3">0 km/h</td><td id="dashStatus-v3"></td><td id="dashGps-v3"></td></tr>
-    <tr id="dashRow-v4" onclick="selectVehicle('v4')" style="cursor:pointer;"><td>Vehicle 4</td><td>DRIVER 4</td><td>3456</td><td id="dashLocation-v4">Kolkata</td><td id="dashSpeed-v4">0 km/h</td><td id="dashStatus-v4"></td><td id="dashGps-v4"></td></tr>
-  </table></div>
+  <div class="vehicle-slider" aria-label="Vehicle slider">
+    <div class="vehicle-slide" id="dashRow-v1" onclick="selectVehicle('v1')">
+      <div class="vehicle-slide-title">Vehicle 1</div><div id="dashSpeed-v1">0 km/h</div>
+      <div class="vehicle-slide-meta"><span>Driver: DRIVER 1</span><span>Plate: 1234</span><span>Location: <b id="dashLocation-v1">Delhi</b></span></div>
+      <div class="vehicle-slide-status"><div id="dashStatus-v1"></div><div id="dashGps-v1"></div></div>
+    </div>
+    <div class="vehicle-slide" id="dashRow-v2" onclick="selectVehicle('v2')">
+      <div class="vehicle-slide-title">Vehicle 2</div><div id="dashSpeed-v2">0 km/h</div>
+      <div class="vehicle-slide-meta"><span>Driver: DRIVER 2</span><span>Plate: 5678</span><span>Location: <b id="dashLocation-v2">Jaipur</b></span></div>
+      <div class="vehicle-slide-status"><div id="dashStatus-v2"></div><div id="dashGps-v2"></div></div>
+    </div>
+    <div class="vehicle-slide" id="dashRow-v3" onclick="selectVehicle('v3')">
+      <div class="vehicle-slide-title">Vehicle 3</div><div id="dashSpeed-v3">0 km/h</div>
+      <div class="vehicle-slide-meta"><span>Driver: DRIVER 3</span><span>Plate: 9012</span><span>Location: <b id="dashLocation-v3">Mumbai</b></span></div>
+      <div class="vehicle-slide-status"><div id="dashStatus-v3"></div><div id="dashGps-v3"></div></div>
+    </div>
+    <div class="vehicle-slide" id="dashRow-v4" onclick="selectVehicle('v4')">
+      <div class="vehicle-slide-title">Vehicle 4</div><div id="dashSpeed-v4">0 km/h</div>
+      <div class="vehicle-slide-meta"><span>Driver: DRIVER 4</span><span>Plate: 3456</span><span>Location: <b id="dashLocation-v4">Kolkata</b></span></div>
+      <div class="vehicle-slide-status"><div id="dashStatus-v4"></div><div id="dashGps-v4"></div></div>
+    </div>
+  </div>
 </div>
 
 <div id="tracking" class="page">
@@ -751,7 +792,7 @@ function updateRowsVisibility(){
     if(v.gpsActive) gpsCount++;
     ['dashRow-', 'vehicleRow-'].forEach(prefix=>{
       let row = document.getElementById(prefix + id);
-      if(row){ row.style.display = 'table-row'; row.classList.toggle('active-row', id === activeVehicle); }
+      if(row){ row.style.display = prefix === 'dashRow-' ? 'grid' : 'table-row'; row.classList.toggle('active-row', id === activeVehicle); }
     });
     let ds = document.getElementById('dashStatus-' + id); if(ds) ds.innerHTML = `<div class="camera-actions" style="justify-content:flex-start;">${videoStatus}${cameraToggleButton(id, 'dash')}${recordButton(id, 'dash')}</div>`;
     let vs = document.getElementById('vehicleStatus-' + id); if(vs) vs.innerHTML = videoStatus;
